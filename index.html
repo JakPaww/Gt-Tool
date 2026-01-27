@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jek Cal's - GT Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Default to Dark Mode Variables */
+            --bg-color: #0f172a;
+            --bg-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                        radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                        radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --text-highlight: #ffffff;
+            --panel-bg: rgba(30, 41, 59, 0.4);
+            --panel-border: rgba(255, 255, 255, 0.1);
+            --nav-bg: rgba(15, 23, 42, 0.8);
+            --input-bg: rgba(15, 23, 42, 0.6);
+            --input-border: rgba(255, 255, 255, 0.1);
+            --input-focus: rgba(15, 23, 42, 0.9);
+            --accent-blue: #3b82f6;
+        }
+
+        [data-theme='light'] {
+            /* Light Mode Variables */
+            --bg-color: #f0f9ff;
+            --bg-image: radial-gradient(at 0% 0%, #e0f2fe 0, transparent 50%), 
+                        radial-gradient(at 50% 100%, #bae6fd 0, transparent 50%), 
+                        radial-gradient(at 100% 0%, #f0f9ff 0, transparent 50%);
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --text-highlight: #0f172a;
+            --panel-bg: rgba(255, 255, 255, 0.65);
+            --panel-border: rgba(59, 130, 246, 0.15);
+            --nav-bg: rgba(255, 255, 255, 0.85);
+            --input-bg: rgba(255, 255, 255, 0.8);
+            --input-border: rgba(148, 163, 184, 0.2);
+            --input-focus: rgba(255, 255, 255, 1);
+            --accent-blue: #2563eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: var(--bg-image);
+            background-attachment: fixed;
+            color: var(--text-main);
+            transition: background 0.5s ease, color 0.3s ease;
+        }
+
+        /* Utilities */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.1); }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: background 0.3s ease, border 0.3s ease;
+        }
+        
+        .glass-nav {
+            background: var(--nav-bg);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--panel-border);
+            transition: background 0.3s ease, border 0.3s ease;
+        }
+
+        .glass-input {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-highlight);
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus {
+            background: var(--input-focus);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+        
+        [data-theme='light'] .glass-input::placeholder { color: #94a3b8; }
+        [data-theme='dark'] .glass-input::placeholder { color: #64748b; }
+
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%;
+            background: #f8fafc; cursor: pointer; margin-top: -6px; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer;
+            background: var(--panel-border); border-radius: 2px;
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .toggle-checkbox:checked { right: 0; border-color: #68D391; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
+
+        /* Ping Animation for Status */
+        .ping {
+            animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        // --- ICONS ---
+        const IconBase = ({ children, size = 20, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+        );
+        const Icons = {
+            Home: (p) => <IconBase {...p}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></IconBase>,
+            Calculator: (p) => <IconBase {...p}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></IconBase>,
+            ShoppingBag: (p) => <IconBase {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></IconBase>,
+            User: (p) => <IconBase {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconBase>,
+            Shirt: (p) => <IconBase {...p}><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></IconBase>,
+            ArrowLeft: (p) => <IconBase {...p}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></IconBase>,
+            Rocket: (p) => <IconBase {...p}><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></IconBase>,
+            Ghost: (p) => <IconBase {...p}><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></IconBase>,
+            Cube: (p) => <IconBase {...p}><path d="m21 16-9 4-9-4"/><path d="m21 8-9 4-9-4"/><path d="M3 12v8l9 4 9-4v-8"/></IconBase>,
+            Refresh: (p) => <IconBase {...p}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></IconBase>,
+            Sun: (p) => <IconBase {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></IconBase>,
+            Moon: (p) => <IconBase {...p}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></IconBase>,
+            Activity: (p) => <IconBase {...p}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></IconBase>
+        };
+
+        const WL_ICON = "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3872/y-offset/0/window-width/32/window-height/32?format=webp&fill=cb-20260115085450";
+        const GHOST_JAR_ICON = "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2176/y-offset/448/window-width/32/window-height/32?format=webp&fill=cb-20260115085450";
+        
+        // --- MENU ICONS ---
+        const SURG_ICON = "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3200/y-offset/512/window-width/32/window-height/32?format=webp&fill=cb-20260115085450";
+        const DRONE_ICON = "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2112/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450";
+        const BBM_ICON = "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/64/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450";
+
+        // BBM SHOP DATA
+        const BBM_SHOP_DATA = [
+            { name: "Balloon Throwing Stand", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/896/y-offset/608/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Bouncy Balloon", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/224/y-offset/608/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dunking Bucket", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1600/y-offset/928/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Kiddie Pool", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1664/y-offset/928/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Inflatable Ring", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1632/y-offset/928/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Target", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/928/y-offset/608/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Waterslide", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1568/y-offset/928/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Waterslide Strut", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1536/y-offset/928/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Party Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3712/y-offset/256/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Party Bunting", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/320/y-offset/544/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Adobe Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3264/y-offset/64/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Churro Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/576/y-offset/192/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Corn Field Ladder", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1952/y-offset/1472/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Nacho Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/576/y-offset/320/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Olmec Head", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3232/y-offset/64/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Pinata Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1152/y-offset/320/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Wrestling Ring", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1120/y-offset/320/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Castle Stone", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/576/y-offset/768/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Castle Stone Background", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/608/y-offset/768/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Castle Turret", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/640/y-offset/768/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Manor House Sandstone", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2656/y-offset/960/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Manor House Sandstone BG", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2688/y-offset/960/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Nobleman's House", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1664/y-offset/896/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Stables", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1856/y-offset/896/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Art Wall", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1248/y-offset/32/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Audio Gear", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/352/y-offset/576/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Audio Rack", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/384/y-offset/576/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Clouds Background", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/352/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Clouds Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/224/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dark Aqua Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/576/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dark Blue Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1280/y-offset/608/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dark Brown Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/704/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dark Green Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1248/y-offset/608/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dark Grey Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/736/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dark Orange Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/672/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dark Purple Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/640/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dark Walnut Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/384/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dark Walnut Ladders", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/448/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dark Walnut Wall", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/416/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dark Yellow Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/608/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Dinosaur Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/288/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "E-Z Cook Oven", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2944/y-offset/96/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Innie Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1376/y-offset/128/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Jade Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2368/y-offset/320/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Outie Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1408/y-offset/128/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Picket Fence", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/128/y-offset/32/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Skull Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/256/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Sheet Music: Bass", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2528/y-offset/32/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Sheet Music: Drums", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2720/y-offset/32/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Sheet Music: Piano", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2624/y-offset/32/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Sheet Music: Sax", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/416/y-offset/576/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            // Summer
+            { name: "Beach Umbrella", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1280/y-offset/96/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Cow Skull", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/704/y-offset/352/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Deck Chair", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2880/y-offset/768/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Flamingo", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/736/y-offset/352/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Sand Bucket", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/960/y-offset/1696/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Sandtopian", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/544/y-offset/1696/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            
+            // EXCLUSIVE TO MACHINE (The Big Ones)
+            { name: "Black Leather Couch", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/544/y-offset/1120/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Chimney", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/480/y-offset/1120/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Conveyor Block", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2944/y-offset/1376/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Creepy Baby Block", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/128/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Creepy Baby Gate", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1216/y-offset/1248/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Digital Dirt", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/160/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Granite Block - Blue", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2880/y-offset/1696/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Granite Block - Green", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2912/y-offset/1696/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Granite Block - Red", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2944/y-offset/1696/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Granite Column", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/192/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Grimstone Background", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/512/y-offset/1120/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Growmoji Smile", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/512/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Growmoji Tongue", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2048/y-offset/1088/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Growmoji Wow", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/544/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Happy Block", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2976/y-offset/1376/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Lava Falls", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/320/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Mahogany Frame", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/448/y-offset/1120/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Regal Bannister", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/416/y-offset/1120/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Regal Stairs", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/384/y-offset/1120/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Retro Tape Block", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/928/y-offset/1312/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Rickety Ladders", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/480/y-offset/1024/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Shining Purple", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1984/y-offset/1088/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Shining Red", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1920/y-offset/1088/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Shining Yellow", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1952/y-offset/1088/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Slick Blue Block", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3904/y-offset/1536/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Slick Green Block", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3936/y-offset/1536/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Slick Red Block", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3872/y-offset/1536/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            
+            // EVENT EXCLUSIVES
+            { name: "Buddy of Stone", cat: "event", eventCat: "valentine", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1056/y-offset/1632/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Cotton Candy Clouds", cat: "event", eventCat: "valentine", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2816/y-offset/1440/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Fountain of Love", cat: "event", eventCat: "valentine", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1440/y-offset/1632/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Love Ladder", cat: "event", eventCat: "valentine", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2400/y-offset/1312/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Towering Hair", cat: "event", eventCat: "valentine", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2848/y-offset/1440/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Ceremonial Altar", cat: "event", eventCat: "valentine", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1536/y-offset/1888/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            
+            { name: "Shamrock Checkpoint", cat: "event", eventCat: "stpatrick", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3488/y-offset/1440/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Shepard's Pie Block", cat: "event", eventCat: "stpatrick", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3392/y-offset/1440/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "St Pat Wall Green", cat: "event", eventCat: "stpatrick", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3424/y-offset/1312/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "St Pat Wall White", cat: "event", eventCat: "stpatrick", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3392/y-offset/1312/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "The Wonderful Barn", cat: "event", eventCat: "stpatrick", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/608/y-offset/1664/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            
+            { name: "Candy Brick Wall", cat: "event", eventCat: "grow4good", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1440/y-offset/1792/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            
+            { name: "Gaekkebrev", cat: "event", eventCat: "easter", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/576/y-offset/1472/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Sunnyside Yolkfall", cat: "event", eventCat: "easter", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1152/y-offset/1664/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Sweet Bunny Checkpoint", cat: "event", eventCat: "easter", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/768/y-offset/1920/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            
+            { name: "Taco Window", cat: "event", eventCat: "cinco", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2048/y-offset/1344/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            
+            { name: "Super Pineapple Door", cat: "event", eventCat: "pineapple", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3680/y-offset/1472/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            
+            { name: "Summer Checkpoint", cat: "event", eventCat: "summerfest", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/192/y-offset/1216/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Tropical Bar", cat: "event", eventCat: "summerfest", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/736/y-offset/1376/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Tropical Bar Stool", cat: "event", eventCat: "summerfest", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/768/y-offset/1376/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            
+            { name: "Rice Crop Wallpaper", cat: "event", eventCat: "harvest", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/224/y-offset/1408/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            
+            { name: "Kooky Checkpoint", cat: "event", eventCat: "halloween", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2688/y-offset/1728/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            
+            // Misc
+            { name: "Dark Chocolate Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/96/y-offset/320/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Diamond-Encrusted Jade", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2464/y-offset/320/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Draped Filigreed Jade", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2432/y-offset/320/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Filigreed Jade Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2400/y-offset/320/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Googly-Eyed Diamond Jade", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2496/y-offset/320/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Jigsaw Wallpaper", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3232/y-offset/448/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Sheet Music: Flute", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1504/y-offset/704/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Sheet Music: Guitar", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2272/y-offset/736/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { name: "Sheet Music: Violin", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2432/y-offset/832/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+        ];
+
+        const BBM_ITEMS = [
+            { name: "Adobe Block", rarity: "Exclusive", desc: "Block tanah liat merah muda." },
+            { name: "Churro Block", rarity: "Exclusive", desc: "Block manis berbentuk churro." },
+            { name: "Digital Dirt", rarity: "Exclusive", desc: "Tanah digital masa depan." },
+            { name: "Wrestling Ring", rarity: "Rare", desc: "Ring gulat untuk pamer kekuatan." },
+            { name: "Rainbow Block", rarity: "Uncommon", desc: "Block warna-warni pelangi." },
+            { name: "Magic Bacon Wallpaper", rarity: "Uncommon", desc: "Wallpaper bacon ajaib." },
+            { name: "Note Block", rarity: "Common", desc: "Membuat suara musik saat diinjak." },
+            { name: "White Block", rarity: "Common", desc: "Block dasar warna putih." },
+            { name: "Black Block", rarity: "Common", desc: "Block dasar warna hitam." },
+            { name: "Glass Block", rarity: "Common", desc: "Block kaca transparan." },
+        ];
+
+        const SURGERY_ITEMS = [
+            { id: 1, name: "Surg-E", qty: 5, priceType: 'surg_e', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3200/y-offset/512/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 2, name: "Surgical Anesthetic", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3808/y-offset/128/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 3, name: "Surgical Antibiotics", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3872/y-offset/128/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 4, name: "Surgical Antiseptic", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3840/y-offset/128/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 5, name: "Surgical Clamp", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3488/y-offset/512/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 6, name: "Surgical Defibrillator", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3456/y-offset/512/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 7, name: "Surgical Lab Kit", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3552/y-offset/512/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 8, name: "Surgical Pins", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3392/y-offset/512/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 9, name: "Surgical Scalpel", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3776/y-offset/128/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 10, name: "Surgical Splint", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3904/y-offset/128/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 11, name: "Surgical Sponge", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3744/y-offset/128/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 12, name: "Surgical Stitches", qty: 20, priceType: 'special_200', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3936/y-offset/128/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 13, name: "Surgical Transfusion", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3424/y-offset/512/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 14, name: "Surgical Ultrasound", qty: 20, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3520/y-offset/512/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+        ];
+
+        const STARTOPIA_ITEMS = [
+            { id: 1, name: "AI Brain", qty: 5, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1920/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 2, name: "Cyborg Diplomat", qty: 5, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2208/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 3, name: "Galactibolt", qty: 5, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1952/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 4, name: "Gigablaster", qty: 5, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2048/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 5, name: "Growton Torpedo", qty: 5, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2240/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 6, name: "HyperShields", qty: 5, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1888/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 7, name: "Quadriscanner", qty: 5, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2080/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 8, name: "Space Meds", qty: 5, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1984/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 9, name: "Star Fuel", qty: 25, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/256/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 10, name: "Star Supplies", qty: 5, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2176/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 11, name: "Stellar Documents", qty: 5, priceType: 'normal', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2144/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 12, name: "Tactical Drone", qty: 5, priceType: 'special_200', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2112/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
+            { id: 13, name: "Teleporter Charge", qty: 5, priceType: 'special_200', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2016/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" }
+        ];
+        
+        const XP_ITEMS = [
+            { id: 'charm', name: 'Ghost Dragon Charm', desc: '+180 XP / jar', bonus: 180, type: 'flat', img: 'https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1120/y-offset/960/window-width/32/window-height/32?format=webp&fill=cb-20260115085450' },
+            { id: 'tart', name: 'Coconut Tart', desc: '+30 XP / jar', bonus: 30, type: 'flat', img: 'https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2304/y-offset/864/window-width/32/window-height/32?format=webp&fill=cb-20260115085450' },
+            { id: 'cookie', name: 'Gingerbread Cookie', desc: '10% chance x3 XP', bonus: 0.2, type: 'mult_avg', img: 'https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1216/y-offset/672/window-width/32/window-height/32?format=webp&fill=cb-20260115085450' },
+            { id: 'totem', name: 'Ancestral Totem', desc: '5% chance x2 XP', bonus: 0.05, type: 'mult_avg', img: 'https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3424/y-offset/608/window-width/32/window-height/32?format=webp&fill=cb-20260115085450' },
+            { id: 'ring', name: 'Ring of Wisdom', desc: '10% chance x2 XP', bonus: 0.1, type: 'mult_avg', img: 'https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3264/y-offset/224/window-width/32/window-height/32?format=webp&fill=cb-20260115085450' },
+        ];
+
+        const ROLES = {
+            CRAFTER: ["Builder", "Chef"],
+            SUPPLIER: ["Farmer", "Surgeon", "Fishing", "Star Captain"]
+        };
+
+        const LEVEL_DATA = {
+            CRAFTER: [{req:1500,reward:230},{req:6000,reward:460},{req:13500,reward:690},{req:24000,reward:920},{req:37500,reward:1150},{req:54000,reward:1380},{req:73500,reward:1610},{req:96000,reward:1840},{req:121500,reward:2070},{req:150000,reward:2300}],
+            SUPPLIER: [{req:1300,reward:270},{req:5200,reward:540},{req:11700,reward:810},{req:20800,reward:1080},{req:32500,reward:1350},{req:46800,reward:1620},{req:63700,reward:1890},{req:83200,reward:2160},{req:105300,reward:2430},{req:130000,reward:2700}]
+        };
+
+        const GEM_COSTS = {
+            CRAFTER: [0, 4000, 16000, 36000, 64000, 100000, 144000, 196000, 256000, 324000],
+            SUPPLIER: [0, 3000, 12000, 27000, 48000, 75000, 108000, 147000, 192000, 243000]
+        };
+
+        // --- SUB-COMPONENTS ---
+
+        const Navbar = ({ activePage, setPage, theme, toggleTheme }) => (
+            <nav className="glass-nav fixed top-0 w-full z-50 px-4 md:px-8 h-16 flex items-center justify-between">
+                <div 
+                    className="flex items-center gap-3 cursor-pointer group" 
+                    onClick={() => setPage('dashboard')}
+                >
+                    <div className="bg-blue-600 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xl group-hover:scale-110 transition-transform">J</div>
+                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 text-theme-highlight">Jek Cal's</span>
+                </div>
+                <div className="flex gap-4 items-center">
+                    {activePage !== 'dashboard' && (
+                        <button 
+                            onClick={() => setPage('dashboard')}
+                            className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors flex items-center gap-2 text-theme-main"
+                        >
+                            <Icons.ArrowLeft size={16}/> Menu
+                        </button>
+                    )}
+                    <button 
+                        onClick={toggleTheme}
+                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-theme-main transition-colors"
+                        title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                    >
+                        {theme === 'dark' ? <Icons.Sun size={20}/> : <Icons.Moon size={20}/>}
+                    </button>
+                </div>
+            </nav>
+        );
+
+        const ServerStatus = () => {
+            const [playerCount, setPlayerCount] = useState(null); 
+            const [history, setHistory] = useState([50000, 50500, 51000, 50800, 52000]); 
+            const [isRealData, setIsRealData] = useState(false);
+            const [isLoading, setIsLoading] = useState(true);
+
+            const updateHistory = (val) => {
+                setHistory(h => {
+                    const newHistory = [...h, val];
+                    if(newHistory.length > 20) newHistory.shift();
+                    return newHistory;
+                });
+            };
+
+            const fetchStatus = async () => {
+                setIsLoading(true);
+                try {
+                    // OPTION 1: Menggunakan Vercel Serverless Function (setelah deploy)
+                    // Ganti 'your-app-name' dengan nama project Vercel Anda
+                    // let response = await fetch('https://your-app-name.vercel.app/api/gt-status');
+                    
+                    // OPTION 2: Untuk local development atau jika belum deploy
+                    // Gunakan CORS proxy alternatif sebagai fallback
+                    let response = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://growtopiagame.com/detail')}`);
+                    
+                    if (!response.ok) throw new Error('Network error');
+                    
+                    let result = await response.json();
+                    
+                    // Handle response dari Vercel serverless function
+                    let gtData;
+                    if (result.success && result.data) {
+                        // Response dari Vercel API
+                        gtData = result.data;
+                    } else {
+                        // Response langsung dari CORS proxy
+                        gtData = result;
+                    }
+
+                    if (gtData && gtData.online_user) {
+                        const count = parseInt(gtData.online_user);
+                        setPlayerCount(count);
+                        setIsRealData(true); 
+                        updateHistory(count);
+                        setIsLoading(false);
+                        return;
+                    }
+                    throw new Error('Data format error');
+                } catch (error) {
+                    console.log("Fetch failed, falling back to simulation", error);
+                    // Fallback to simulation ONLY if fetch failed
+                    setIsRealData(false);
+                    setPlayerCount(prev => {
+                        const current = prev || 55000; 
+                        const change = Math.floor(Math.random() * 800) - 400; 
+                        const newVal = Math.max(1000, current + change);
+                        updateHistory(newVal);
+                        return newVal;
+                    });
+                    setIsLoading(false);
+                }
+            };
+
+            useEffect(() => {
+                fetchStatus(); 
+                // Update every 15s to be safe
+                const interval = setInterval(fetchStatus, 15000); 
+                return () => clearInterval(interval);
+            }, []);
+
+            const maxVal = Math.max(...history, 60000);
+            const minVal = Math.min(...history, 40000);
+            const range = maxVal - minVal || 1;
+            
+            const points = history.map((val, i) => {
+                const x = (i / (history.length - 1 || 1)) * 100;
+                const y = 100 - ((val - minVal) / range) * 100;
+                return `${x},${y}`;
+            }).join(' ');
+
+            return (
+                <div className="glass-panel rounded-2xl p-6 mb-6 animate-fade-in relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                        <Icons.Activity size={100} className="text-emerald-500" />
+                    </div>
+                    
+                    <div className="flex flex-col md:flex-row justify-between items-end gap-6 relative z-10">
+                        <div>
+                            <div className="flex items-center gap-3 mb-2">
+                                <span className="relative flex h-3 w-3">
+                                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isRealData ? 'bg-emerald-400' : 'bg-yellow-400'}`}></span>
+                                  <span className={`relative inline-flex rounded-full h-3 w-3 ${isRealData ? 'bg-emerald-500' : 'bg-yellow-500'}`}></span>
+                                </span>
+                                <h2 className="text-sm font-bold text-theme-muted uppercase tracking-wider">Server Status</h2>
+                                {isLoading ? (
+                                    <span className="text-[10px] bg-slate-700 text-slate-300 px-2 py-0.5 rounded">Checking...</span>
+                                ) : isRealData ? (
+                                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">LIVE DATA</span>
+                                ) : (
+                                    <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded border border-yellow-500/30">SIMULATED</span>
+                                )}
+                            </div>
+                            <div className="text-4xl md:text-5xl font-black text-theme-highlight font-mono flex items-baseline gap-2">
+                                {playerCount ? new Intl.NumberFormat('en-US').format(playerCount) : '...'}
+                                <span className="text-sm font-sans font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">Online</span>
+                            </div>
+                            <p className="text-xs text-theme-muted mt-2">
+                                {isRealData 
+                                    ? "Data diambil real-time dari growtopiagame.com" 
+                                    : "Gagal mengambil data asli (CORS), menampilkan estimasi."}
+                            </p>
+                        </div>
+
+                        <div className="w-full md:w-1/3 h-16 relative">
+                            <svg className="w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <polyline 
+                                    points={points} 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2" 
+                                    className={isRealData ? "text-emerald-500" : "text-yellow-500"}
+                                    vectorEffect="non-scaling-stroke"
+                                />
+                            </svg>
+                            <div className="flex justify-between text-[10px] text-theme-muted mt-1 font-mono">
+                                <span>History</span>
+                                <span>Now</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const BBMList = () => {
+            return (
+                <div className="animate-fade-in">
+                    <div className="glass-panel p-6 rounded-2xl mb-6 text-center" style={{ background: 'var(--panel-bg)' }}>
+                        <h2 className="text-2xl font-bold text-theme-highlight mb-2">Building Blocks Machine Drops</h2>
+                        <p className="text-theme-muted text-sm">Daftar item eksklusif dan umum yang bisa didapat.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {BBM_ITEMS.map((item, idx) => (
+                            <div key={idx} className="glass-panel p-4 rounded-xl flex items-start gap-4 hover:bg-white/5 transition-colors border border-white/5 group">
+                                <div className="w-12 h-12 rounded-lg bg-black/10 flex items-center justify-center shrink-0 border border-white/10 group-hover:border-orange-500/50 transition-colors">
+                                    <Icons.Cube size={24} className="text-orange-400"/>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="font-bold text-theme-highlight text-sm">{item.name}</h3>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border ${
+                                            item.rarity === 'Exclusive' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' :
+                                            item.rarity === 'Rare' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
+                                            item.rarity === 'Uncommon' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
+                                            'bg-slate-500/10 text-slate-400 border-slate-500/30'
+                                        }`}>{item.rarity}</span>
+                                    </div>
+                                    <p className="text-xs text-theme-muted leading-relaxed">{item.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-6 text-center text-xs text-theme-muted">
+                        *Mesin ini juga bisa menjatuhkan berbagai block umum lainnya secara random.
+                    </div>
+                </div>
+            );
+        };
+
+        const XpLevelCalculator = () => {
+            const [currLevel, setCurrLevel] = useState(1);
+            const [currXp, setCurrXp] = useState(0);
+            const [targetLevel, setTargetLevel] = useState(10);
+            const [activeItems, setActiveItems] = useState({});
+
+            const toggleItem = (id) => {
+                setActiveItems(prev => ({...prev, [id]: !prev[id]}));
+            };
+
+            const stats = useMemo(() => {
+                let totalXpNeeded = 0;
+                let breakdown = [];
+                
+                for (let lvl = currLevel + 1; lvl <= targetLevel; lvl++) {
+                    const req = 50 * (Math.pow(lvl, 2) + 2);
+                    totalXpNeeded += req;
+                    breakdown.push({ level: lvl, req: req });
+                }
+                
+                const finalXpNeeded = Math.max(0, totalXpNeeded - currXp);
+
+                let base = 20;
+                let avgMultiplier = 1.0;
+
+                XP_ITEMS.forEach(item => {
+                    if (activeItems[item.id]) {
+                        if (item.type === 'flat') base += item.bonus;
+                        if (item.type === 'mult_avg') avgMultiplier += item.bonus;
+                    }
+                });
+
+                const avgXpPerJar = base * avgMultiplier;
+                const jarsNeeded = Math.ceil(finalXpNeeded / avgXpPerJar);
+
+                return { finalXpNeeded, avgXpPerJar, jarsNeeded, breakdown };
+            }, [currLevel, currXp, targetLevel, activeItems]);
+
+            const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(num);
+            const formatDecimal = (num) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(num);
+
+            return (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
+                    <div className="lg:col-span-4 space-y-4">
+                        <div className="glass-panel p-5 rounded-2xl space-y-4">
+                            <h3 className="text-lg font-bold text-theme-highlight flex items-center gap-2">
+                                <Icons.User size={20} className="text-blue-400"/> Level Settings
+                            </h3>
+                            <div>
+                                <label className="text-xs font-bold text-theme-muted uppercase mb-1 block">Level Saat Ini (Max 124)</label>
+                                <input type="number" min="0" max="124" value={currLevel} onChange={e => setCurrLevel(Math.min(124, Math.max(0, parseInt(e.target.value)||0)))}
+                                    className="glass-input w-full p-3 rounded-xl font-bold"/>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-theme-muted uppercase mb-1 block">Target Level (Max 125)</label>
+                                <input type="number" min="1" max="125" value={targetLevel} onChange={e => setTargetLevel(Math.min(125, Math.max(1, parseInt(e.target.value)||1)))}
+                                    className="glass-input w-full p-3 rounded-xl font-bold"/>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-theme-muted uppercase mb-1 block">XP Saat Ini</label>
+                                <input type="number" value={currXp} onChange={e => setCurrXp(Math.max(0, parseInt(e.target.value)||0))}
+                                    className="glass-input w-full p-3 rounded-xl font-mono"/>
+                            </div>
+                        </div>
+
+                        <div className="glass-panel p-5 rounded-2xl">
+                             <h3 className="text-lg font-bold text-theme-highlight mb-4 flex items-center gap-2">
+                                <Icons.Ghost size={20} className="text-purple-400"/> Item Penunjang
+                            </h3>
+                            <div className="space-y-3">
+                                {XP_ITEMS.map(item => (
+                                    <div key={item.id} className="flex items-center justify-between p-2 rounded-xl border border-white/5 bg-black/5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-black/10 rounded-lg flex items-center justify-center">
+                                                <img src={item.img} alt={item.name} className="w-8 h-8 object-contain" referrerPolicy="no-referrer"/>
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-bold text-theme-main">{item.name}</div>
+                                                <div className="text-[10px] text-emerald-500">{item.desc}</div>
+                                            </div>
+                                        </div>
+                                        <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                            <input 
+                                                type="checkbox" 
+                                                name={item.id} 
+                                                id={item.id} 
+                                                checked={!!activeItems[item.id]}
+                                                onChange={() => toggleItem(item.id)}
+                                                className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-600 transition-all duration-300"
+                                            />
+                                            <label htmlFor={item.id} className="toggle-label block overflow-hidden h-5 rounded-full bg-slate-700 cursor-pointer"></label>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-8 space-y-4">
+                         <div className="glass-panel p-6 rounded-2xl relative overflow-hidden text-center border-purple-500/20" style={{background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(15, 23, 42, 0.2))'}}>
+                            <div className="relative z-10">
+                                <p className="text-purple-400 font-bold text-xs uppercase tracking-widest mb-2">Total Ghost Jar Dibutuhkan</p>
+                                <h2 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-purple-200 to-purple-500 font-mono">
+                                    {formatNumber(stats.jarsNeeded)} <img src={GHOST_JAR_ICON} className="inline w-10 h-10 -mt-2" referrerPolicy="no-referrer"/>
+                                </h2>
+                                <div className="mt-4 flex justify-center gap-8 text-sm">
+                                    <div>
+                                        <div className="text-theme-muted text-xs">Total XP Kurang</div>
+                                        <div className="font-bold text-theme-highlight font-mono">{formatNumber(stats.finalXpNeeded)} XP</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-theme-muted text-xs">Rata-rata XP / Jar</div>
+                                        <div className="font-bold text-emerald-400 font-mono">~{formatDecimal(stats.avgXpPerJar)} XP</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="glass-panel rounded-2xl overflow-hidden flex flex-col h-[400px]">
+                            <div className="p-4 border-b border-white/10 bg-black/5 font-bold text-theme-muted text-sm">Rincian XP Per Level</div>
+                            <div className="overflow-auto flex-1 p-2">
+                                <table className="w-full text-sm">
+                                    <thead className="text-xs text-theme-muted uppercase bg-black/5 sticky top-0">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left">Level Target</th>
+                                            <th className="px-6 py-3 text-right">Formula</th>
+                                            <th className="px-6 py-3 text-right">XP Dibutuhkan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-theme-main">
+                                        {stats.breakdown.map((row) => (
+                                            <tr key={row.level} className="border-b border-white/5 hover:bg-white/5">
+                                                <td className="px-6 py-3 font-mono font-bold">Lv. {row.level}</td>
+                                                <td className="px-6 py-3 text-right font-mono text-xs text-theme-muted">50 × ({row.level}² + 2)</td>
+                                                <td className="px-6 py-3 text-right font-mono text-emerald-500">{formatNumber(row.req)} XP</td>
+                                            </tr>
+                                        ))}
+                                        {stats.breakdown.length === 0 && (
+                                            <tr><td colSpan="3" className="text-center py-10 text-theme-muted">Target level harus lebih tinggi dari level saat ini.</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const RoleCalculator = () => {
+            const [selectedRole, setSelectedRole] = useState("Builder");
+            const [roleType, setRoleType] = useState("CRAFTER");
+            const [startLevel, setStartLevel] = useState(0);
+            const [currentPoints, setCurrentPoints] = useState(0);
+            const [targetLevel, setTargetLevel] = useState(10);
+            const [dailyQuests, setDailyQuests] = useState(1);
+            const [hasCape, setHasCape] = useState(false);
+
+            useEffect(() => {
+                if (ROLES.CRAFTER.includes(selectedRole)) setRoleType("CRAFTER");
+                else setRoleType("SUPPLIER");
+                setCurrentPoints(0);
+                setHasCape(false); 
+            }, [selectedRole]);
+
+            const calculation = useMemo(() => {
+                const data = LEVEL_DATA[roleType];
+                const costs = GEM_COSTS[roleType];
+                const capeBonus = hasCape ? 1.05 : 1.0;
+                
+                let totalPointsNeeded = 0;
+                let totalQuests = 0;
+                let breakdown = [];
+                
+                for (let i = startLevel; i < targetLevel; i++) {
+                    if (i >= 10) break; 
+                    const levelInfo = data[i];
+                    let pointsNeeded = levelInfo.req;
+                    if (i === startLevel) pointsNeeded = Math.max(0, levelInfo.req - currentPoints);
+                    
+                    const effectiveReward = Math.floor(levelInfo.reward * capeBonus);
+                    const quests = Math.ceil(pointsNeeded / effectiveReward);
+                    
+                    totalPointsNeeded += pointsNeeded;
+                    totalQuests += quests;
+
+                    breakdown.push({
+                        level: i,
+                        points: pointsNeeded,
+                        quests: quests,
+                        baseReward: levelInfo.reward,
+                        effReward: effectiveReward
+                    });
+                }
+
+                const totalDays = Math.ceil(totalQuests / dailyQuests);
+                let totalGems = 0;
+                const costPerFullDay = GEM_COSTS[roleType].slice(0, dailyQuests).reduce((a,b)=>a+b, 0);
+                totalGems += Math.floor(totalQuests / dailyQuests) * costPerFullDay;
+                
+                const remainingQuests = totalQuests % dailyQuests;
+                for(let q=0; q < remainingQuests; q++) {
+                    if(q < costs.length) totalGems += costs[q];
+                }
+
+                return { totalPointsNeeded, totalQuests, totalDays, totalGems, breakdown };
+            }, [roleType, startLevel, currentPoints, targetLevel, dailyQuests, hasCape]);
+
+            const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(num);
+
+            return (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
+                    <div className="lg:col-span-4 space-y-4">
+                        <div className="glass-panel p-5 rounded-2xl">
+                            <label className="text-xs font-bold text-theme-muted uppercase mb-3 block">Role Class</label>
+                            <div className="grid grid-cols-2 gap-2 mb-4">
+                                {[...ROLES.CRAFTER, ...ROLES.SUPPLIER].map(role => (
+                                    <button key={role} onClick={() => setSelectedRole(role)}
+                                        className={`py-2 px-3 rounded-lg text-xs font-bold transition-all border ${selectedRole === role ? 'bg-blue-600/30 border-blue-500 text-blue-500' : 'bg-white/5 border-transparent hover:bg-white/10 text-theme-main'}`}>
+                                        {role}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/5">
+                                <div className="flex items-center gap-2">
+                                    <Icons.Shirt size={18} className={hasCape ? "text-yellow-400" : "text-slate-500"}/>
+                                    <div>
+                                        <div className="text-sm font-bold text-theme-main">{roleType === "CRAFTER" ? "Crafter" : "Supplier"} Cape</div>
+                                        <div className="text-xs text-theme-muted">+5% Quest Points</div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setHasCape(!hasCape)} className={`w-12 h-6 rounded-full transition-colors relative ${hasCape ? 'bg-blue-500' : 'bg-slate-700'}`}>
+                                    <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${hasCape ? 'translate-x-6' : ''}`}></div>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="glass-panel p-5 rounded-2xl space-y-6">
+                            <div>
+                                <div className="flex justify-between mb-2 text-sm text-theme-muted">
+                                    <span>Level Saat Ini: <b className="text-theme-highlight">{startLevel}</b></span>
+                                    <span>Target: <b className="text-emerald-500">{targetLevel === 10 ? "MAX" : targetLevel}</b></span>
+                                </div>
+                                <input type="range" min="0" max="9" value={startLevel} className="w-full accent-blue-500 mb-4" onChange={(e) => { const val = parseInt(e.target.value); setStartLevel(val); if(val >= targetLevel) setTargetLevel(val + 1); }}/>
+                                <input type="range" min="1" max="10" value={targetLevel} className="w-full accent-emerald-500" onChange={(e) => { const val = parseInt(e.target.value); setTargetLevel(val); if(val <= startLevel) setStartLevel(val - 1); }}/>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-theme-muted uppercase mb-2 block">Poin Saat Ini</label>
+                                <input type="number" value={currentPoints} onChange={(e) => setCurrentPoints(Math.max(0, parseInt(e.target.value)||0))} className="glass-input w-full p-2 rounded-lg font-mono text-sm" placeholder="0"/>
+                            </div>
+                            <div>
+                                <div className="flex justify-between mb-2 text-sm">
+                                    <span className="text-theme-muted">Quest / Hari</span>
+                                    <span className="bg-blue-600 px-2 rounded text-white text-xs py-0.5">{dailyQuests}</span>
+                                </div>
+                                <input type="range" min="1" max="10" value={dailyQuests} onChange={(e) => setDailyQuests(parseInt(e.target.value))} className="w-full accent-purple-500"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="lg:col-span-8 space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="md:col-span-2 glass-panel p-6 rounded-2xl relative overflow-hidden border-yellow-500/20" style={{background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(15, 23, 42, 0.1))'}}>
+                                <div className="relative z-10">
+                                    <p className="text-yellow-500 font-bold text-xs uppercase tracking-widest">Estimasi Biaya Gems</p>
+                                    <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-400 to-amber-600 font-mono mt-1">{formatNumber(calculation.totalGems)} 💎</h2>
+                                </div>
+                            </div>
+                            <div className="glass-panel p-4 rounded-2xl flex flex-col justify-center">
+                                <span className="text-theme-muted text-xs uppercase font-bold">Total Hari</span>
+                                <span className="text-3xl font-bold text-theme-highlight">{formatNumber(calculation.totalDays)}</span>
+                                <span className="text-theme-muted text-xs">Untuk mencapai target</span>
+                            </div>
+                        </div>
+                        <div className="glass-panel rounded-2xl overflow-hidden h-[400px] flex flex-col">
+                            <div className="p-4 border-b border-white/10 bg-black/5 font-bold text-theme-muted text-sm">Quest Roadmap</div>
+                            <div className="overflow-auto flex-1 p-2">
+                                <table className="w-full text-sm">
+                                    <thead className="text-xs text-theme-muted uppercase bg-black/5 sticky top-0">
+                                        <tr><th className="px-4 py-2 text-left">Level</th><th className="px-4 py-2 text-right">Poin</th><th className="px-4 py-2 text-right">Reward/Q</th><th className="px-4 py-2 text-right">Total Quest</th></tr>
+                                    </thead>
+                                    <tbody className="text-theme-main">
+                                        {calculation.breakdown.map((row) => (
+                                            <tr key={row.level} className="border-b border-white/5 hover:bg-white/5">
+                                                <td className="px-4 py-3 font-mono">{row.level} → {row.level+1}</td>
+                                                <td className="px-4 py-3 text-right font-mono">{formatNumber(row.points)}</td>
+                                                <td className="px-4 py-3 text-right font-mono text-emerald-500">+{formatNumber(row.effReward)} {hasCape && <span className="text-xs text-yellow-500">⚡</span>}</td>
+                                                <td className="px-4 py-3 text-right font-bold text-theme-highlight">{formatNumber(row.quests)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ShopCalculator = ({ title, icon: IconComponent, items, defaultPrice }) => {
+            const [packCount, setPackCount] = useState(1);
+            const [packPrice, setPackPrice] = useState(defaultPrice); 
+            const [rates, setRates] = useState({}); 
+
+            const handleRateChange = (id, val) => {
+                setRates(prev => ({...prev, [id]: parseFloat(val) || 0}));
+            };
+
+            const stats = useMemo(() => {
+                let totalRevenue = 0;
+                
+                const itemsCalculated = items.map(item => {
+                    const totalQty = item.qty * packCount;
+                    const rate = rates[item.id] || 0;
+                    let subtotal = 0;
+
+                    if (rate > 0) {
+                        if (item.priceType === 'special_200') {
+                            subtotal = (totalQty / 200) * rate;
+                        } else if (item.priceType === 'surg_e') {
+                            subtotal = totalQty * rate;
+                        } else {
+                            subtotal = totalQty / rate;
+                        }
+                    }
+                    totalRevenue += subtotal;
+                    return { ...item, totalQty, subtotal };
+                });
+
+                const totalCost = packCount * packPrice;
+                const profit = totalRevenue - totalCost;
+
+                return { itemsCalculated, totalCost, totalRevenue, profit };
+            }, [packCount, packPrice, rates, items]);
+
+            const formatWL = (num) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(num);
+
+            return (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
+                    {/* LEFT: SETTINGS */}
+                    <div className="lg:col-span-4 space-y-4">
+                        <div className="glass-panel p-5 rounded-2xl">
+                            <h3 className="text-lg font-bold text-theme-highlight mb-4 flex items-center gap-2">
+                                <IconComponent size={20} className="text-emerald-500"/> Settings Pack
+                            </h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-bold text-theme-muted uppercase mb-1 block">Jumlah Pack</label>
+                                    <input type="number" value={packCount} onChange={e => setPackCount(Math.max(1, parseInt(e.target.value)||1))}
+                                        className="glass-input w-full p-3 rounded-xl font-bold text-lg"/>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-theme-muted uppercase mb-1 block">Harga Beli Per Pack (WL)</label>
+                                    <div className="relative">
+                                        <input type="number" value={packPrice} onChange={e => setPackPrice(parseFloat(e.target.value)||0)}
+                                            className="glass-input w-full p-3 rounded-xl font-bold pl-10"/>
+                                        <img src={WL_ICON} className="absolute left-3 top-3 w-5 h-5" referrerPolicy="no-referrer"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="glass-panel p-5 rounded-2xl" style={{background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(15, 23, 42, 0.1))'}}>
+                            <h3 className="text-theme-muted text-xs font-bold uppercase mb-4">Estimasi Profit</h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-theme-muted">Total Modal</span>
+                                    <span className="font-mono text-red-400">-{formatWL(stats.totalCost)} <img src={WL_ICON} className="inline w-3 h-3" referrerPolicy="no-referrer"/></span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-theme-muted">Total Penjualan</span>
+                                    <span className="font-mono text-emerald-500">+{formatWL(stats.totalRevenue)} <img src={WL_ICON} className="inline w-3 h-3" referrerPolicy="no-referrer"/></span>
+                                </div>
+                                <div className="h-px bg-white/10 my-2"></div>
+                                <div className="flex justify-between items-center">
+                                    <span className="font-bold text-theme-highlight">Net Profit</span>
+                                    <span className={`text-2xl font-black font-mono ${stats.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                        {stats.profit > 0 ? '+' : ''}{formatWL(stats.profit)} <img src={WL_ICON} className="inline w-5 h-5" referrerPolicy="no-referrer"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* RIGHT: ITEMS TABLE */}
+                    <div className="lg:col-span-8">
+                        <div className="glass-panel rounded-2xl overflow-hidden flex flex-col h-[700px]">
+                            <div className="p-4 bg-black/5 border-b border-white/10 grid grid-cols-12 text-xs font-bold text-theme-muted uppercase">
+                                <div className="col-span-5">Item</div>
+                                <div className="col-span-4 text-center">Harga Jual</div>
+                                <div className="col-span-3 text-right">Total</div>
+                            </div>
+                            <div className="overflow-y-auto flex-1 p-2 space-y-1">
+                                {stats.itemsCalculated.map(item => (
+                                    <div key={item.id} className="grid grid-cols-12 items-center p-3 rounded-xl hover:bg-white/5 transition-colors border border-white/5 bg-black/5">
+                                        <div className="col-span-5 flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-black/10 rounded-lg flex items-center justify-center border border-white/10">
+                                                <img src={item.img} alt={item.name} className="w-8 h-8 object-contain" referrerPolicy="no-referrer"/>
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-theme-main">{item.name}</div>
+                                                <div className="text-xs text-theme-muted">x{item.qty} per pack = <span className="text-blue-400">{item.totalQty}</span></div>
+                                            </div>
+                                        </div>
+                                        <div className="col-span-4 px-2">
+                                            <div className="relative">
+                                                {item.priceType === 'special_200' ? (
+                                                    <div className="flex items-center gap-2 justify-center">
+                                                        <span className="text-xs text-theme-muted whitespace-nowrap">200 /</span>
+                                                        <input 
+                                                            type="number" 
+                                                            placeholder="WL"
+                                                            onChange={(e) => handleRateChange(item.id, e.target.value)}
+                                                            className="glass-input w-20 p-1.5 text-center text-sm rounded-lg text-emerald-500 placeholder-slate-500 focus:outline-none"
+                                                        />
+                                                    </div>
+                                                ) : item.priceType === 'surg_e' ? (
+                                                    <div className="flex items-center gap-2 justify-center">
+                                                        <span className="text-xs text-theme-muted whitespace-nowrap">1 /</span>
+                                                        <input 
+                                                            type="number" 
+                                                            placeholder="WL"
+                                                            onChange={(e) => handleRateChange(item.id, e.target.value)}
+                                                            className="glass-input w-20 p-1.5 text-center text-sm rounded-lg text-emerald-500 placeholder-slate-500 focus:outline-none"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2 justify-center">
+                                                        <input 
+                                                            type="number" 
+                                                            placeholder="Rate"
+                                                            onChange={(e) => handleRateChange(item.id, e.target.value)}
+                                                            className="glass-input w-20 p-1.5 text-center text-sm rounded-lg text-theme-highlight placeholder-slate-500 focus:outline-none"
+                                                        />
+                                                        <span className="text-xs text-theme-muted whitespace-nowrap">/ 1 WL</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="col-span-3 text-right font-mono font-bold text-emerald-500 text-sm">
+                                            {formatWL(item.subtotal)} <img src={WL_ICON} className="inline w-3 h-3 ml-0.5 opacity-80" referrerPolicy="no-referrer"/>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const BBMShopCalculator = () => {
+            const [showExclusive, setShowExclusive] = useState(true);
+            const [showEvent, setShowEvent] = useState(false);
+            const [selectedEvent, setSelectedEvent] = useState('valentine');
+            
+            const [quantities, setQuantities] = useState({});
+            const [prices, setPrices] = useState({});
+            const [priceModes, setPriceModes] = useState({});
+
+            const eventOptions = [
+                { id: 'valentine', label: "Valentine's Week" },
+                { id: 'stpatrick', label: "St. Patrick's Week" },
+                { id: 'grow4good', label: "Grow4Good" },
+                { id: 'easter', label: "Easter Week" },
+                { id: 'cinco', label: "Cinco De Mayo" },
+                { id: 'pineapple', label: "Super Pineapple" },
+                { id: 'summerfest', label: "SummerFest" },
+                { id: 'harvest', label: "Harvest Festival" },
+                { id: 'halloween', label: "Halloween" },
+            ];
+
+            const visibleItems = useMemo(() => {
+                return BBM_SHOP_DATA.filter(item => {
+                    if (item.cat === 'exclusive' && !showExclusive) return false;
+                    if (item.cat === 'event') {
+                        if (!showEvent) return false;
+                        if (item.eventCat && item.eventCat !== selectedEvent) return false;
+                    }
+                    return true;
+                });
+            }, [showExclusive, showEvent, selectedEvent]);
+
+            const stats = useMemo(() => {
+                let totalWL = 0;
+                let totalItems = 0;
+
+                visibleItems.forEach(item => {
+                    const qty = quantities[item.name] || 0;
+                    const price = prices[item.name] || 0;
+                    const mode = priceModes[item.name] || 'item_per_wl';
+
+                    if (qty > 0 && price > 0) {
+                        if (mode === 'item_per_wl') {
+                            totalWL += qty / price;
+                        } else {
+                            totalWL += qty * price;
+                        }
+                    }
+                    totalItems += qty;
+                });
+
+                return { totalWL, totalItems };
+            }, [visibleItems, quantities, prices, priceModes]);
+
+            const handleQtyChange = (name, val) => setQuantities(p => ({...p, [name]: parseInt(val) || 0}));
+            const handlePriceChange = (name, val) => setPrices(p => ({...p, [name]: parseFloat(val) || 0}));
+            const toggleMode = (name) => {
+                setPriceModes(p => ({
+                    ...p, 
+                    [name]: p[name] === 'wl_per_item' ? 'item_per_wl' : 'wl_per_item'
+                }));
+            };
+
+            const formatWL = (num) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(num);
+
+            return (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
+                    {/* LEFT: CONTROLS & SUMMARY */}
+                    <div className="lg:col-span-4 space-y-4">
+                        <div className="glass-panel p-5 rounded-2xl" style={{background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.1), rgba(15, 23, 42, 0.1))'}}>
+                            <h3 className="text-lg font-bold text-theme-highlight mb-2 flex items-center gap-2">
+                                <img src={BBM_ICON} className="w-6 h-6 object-contain" referrerPolicy="no-referrer" /> BBM Shop
+                            </h3>
+                            <div className="space-y-4 mb-6">
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-black/5 border border-white/5">
+                                    <span className="text-xs text-purple-400 font-bold uppercase">Machine Exclusives</span>
+                                    <div className="relative inline-block w-10 align-middle select-none">
+                                        <input type="checkbox" checked={showExclusive} onChange={() => setShowExclusive(!showExclusive)} className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-600 transition-all duration-300"/>
+                                        <label className="toggle-label block overflow-hidden h-5 rounded-full bg-slate-700 cursor-pointer"></label>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-3 rounded-lg bg-black/5 border border-white/5 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-pink-400 font-bold uppercase">Event Drops</span>
+                                        <div className="relative inline-block w-10 align-middle select-none">
+                                            <input type="checkbox" checked={showEvent} onChange={() => setShowEvent(!showEvent)} className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-600 transition-all duration-300"/>
+                                            <label className="toggle-label block overflow-hidden h-5 rounded-full bg-slate-700 cursor-pointer"></label>
+                                        </div>
+                                    </div>
+                                    
+                                    {showEvent && (
+                                        <div className="animate-fade-in">
+                                            <select 
+                                                value={selectedEvent} 
+                                                onChange={(e) => setSelectedEvent(e.target.value)}
+                                                className="glass-input w-full p-2 text-xs rounded-lg focus:outline-none cursor-pointer"
+                                            >
+                                                {eventOptions.map(opt => (
+                                                    <option key={opt.id} value={opt.id} className="text-black">{opt.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="border-t border-white/10 pt-4">
+                                <p className="text-theme-muted text-xs uppercase font-bold mb-1">Total Keuntungan</p>
+                                <div className="flex items-end gap-2">
+                                    <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600 font-mono">
+                                        {formatWL(stats.totalWL)}
+                                    </h2>
+                                    <img src={WL_ICON} className="w-8 h-8 mb-1" referrerPolicy="no-referrer"/>
+                                </div>
+                                <div className="text-xs text-theme-muted mt-2">
+                                    Total Item Terjual: <span className="text-theme-highlight font-bold">{stats.totalItems}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="glass-panel p-4 rounded-xl text-center">
+                            <p className="text-xs text-theme-muted">
+                                Gunakan tombol <Icons.Refresh size={12} className="inline"/> di sebelah harga untuk mengubah mode harga (Item/WL atau WL/Item).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-8">
+                        <div className="glass-panel rounded-2xl overflow-hidden flex flex-col h-[700px]">
+                            <div className="p-4 bg-black/5 border-b border-white/10 grid grid-cols-12 text-xs font-bold text-theme-muted uppercase gap-2">
+                                <div className="col-span-5 md:col-span-4">Item</div>
+                                <div className="col-span-3 md:col-span-3 text-center">Jml (Qty)</div>
+                                <div className="col-span-4 md:col-span-5 text-center">Harga</div>
+                            </div>
+                            <div className="overflow-y-auto flex-1 p-2 space-y-1">
+                                {visibleItems.map((item, idx) => {
+                                    const qty = quantities[item.name] || '';
+                                    const price = prices[item.name] || '';
+                                    const mode = priceModes[item.name] || 'item_per_wl'; 
+                                    
+                                    let rowTotal = 0;
+                                    if (qty && price) {
+                                        rowTotal = mode === 'item_per_wl' ? qty / price : qty * price;
+                                    }
+
+                                    return (
+                                        <div key={idx} className="grid grid-cols-12 items-center p-2 rounded-xl bg-black/5 hover:bg-white/5 transition-colors border border-white/5 gap-2">
+                                            <div className="col-span-5 md:col-span-4 flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center border shrink-0 ${
+                                                    item.cat === 'exclusive' ? 'bg-purple-500/10 border-purple-500/30' : 
+                                                    item.cat === 'event' ? 'bg-pink-500/10 border-pink-500/30' : 
+                                                    'bg-black/10 border-white/10'
+                                                }`}>
+                                                    <img 
+                                                        src={item.img} 
+                                                        className="w-6 h-6 object-contain" 
+                                                        referrerPolicy="no-referrer"
+                                                        onError={(e) => {
+                                                            e.target.onerror = null; 
+                                                            e.target.src = BBM_ICON; 
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="truncate">
+                                                    <div className="text-xs font-bold text-theme-main truncate">{item.name}</div>
+                                                    {item.cat === 'exclusive' && <div className="text-[9px] text-purple-400">Exclusive</div>}
+                                                    {item.cat === 'event' && <div className="text-[9px] text-pink-400 capitalize">{item.eventCat}</div>}
+                                                </div>
+                                            </div>
+
+                                            <div className="col-span-3 md:col-span-3">
+                                                <input 
+                                                    type="number" 
+                                                    placeholder="0"
+                                                    value={qty}
+                                                    onChange={(e) => handleQtyChange(item.name, e.target.value)}
+                                                    className="glass-input w-full p-1.5 text-center text-xs rounded-lg font-bold focus:outline-none"
+                                                />
+                                            </div>
+
+                                            <div className="col-span-4 md:col-span-5 flex items-center gap-1">
+                                                <div className="flex-1 relative flex items-center">
+                                                    {mode === 'item_per_wl' ? (
+                                                        <>
+                                                            <input 
+                                                                type="number" placeholder="Rate"
+                                                                value={price}
+                                                                onChange={(e) => handlePriceChange(item.name, e.target.value)}
+                                                                className="glass-input w-full p-1.5 text-center text-xs rounded-lg text-emerald-500 focus:outline-none"
+                                                            />
+                                                            <span className="absolute right-1 text-[9px] text-theme-muted">/1</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span className="absolute left-2 text-[9px] text-theme-muted">1/</span>
+                                                            <input 
+                                                                type="number" placeholder="WL"
+                                                                value={price}
+                                                                onChange={(e) => handlePriceChange(item.name, e.target.value)}
+                                                                className="glass-input w-full p-1.5 pl-4 text-center text-xs rounded-lg text-yellow-500 focus:outline-none"
+                                                            />
+                                                        </>
+                                                    )}
+                                                </div>
+                                                
+                                                <button 
+                                                    onClick={() => toggleMode(item.name)}
+                                                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/20 text-theme-muted hover:text-theme-main transition-colors"
+                                                    title="Switch Price Mode"
+                                                >
+                                                    <Icons.Refresh size={12}/>
+                                                </button>
+
+                                                <div className="w-12 text-right text-[10px] font-mono text-theme-main hidden md:block">
+                                                    {rowTotal > 0 ? formatWL(rowTotal) : '-'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Dashboard = ({ setPage }) => {
+            const menus = [
+                { id: 'role', title: 'Role Calculator', desc: 'Hitung gems & hari untuk level up role.', icon: Icons.Calculator, color: 'from-blue-500 to-indigo-600' },
+                { id: 'surgery', title: 'Surgery Shop', desc: 'Hitung profit jualan pack surgery.', imgSrc: SURG_ICON, color: 'from-emerald-500 to-teal-600' },
+                { id: 'startopia', title: 'Startopia Shop', desc: 'Kalkulator profit misi luar angkasa.', imgSrc: DRONE_ICON, color: 'from-purple-600 to-pink-700' },
+                { id: 'xp', title: 'XP Level', desc: 'Kalkulator XP Ghost Jar.', imgSrc: GHOST_JAR_ICON, color: 'from-slate-600 to-slate-700' },
+                { id: 'bbm', title: 'BBM Shop', desc: 'Hitung profit panen Building Blocks Machine.', imgSrc: BBM_ICON, color: 'from-orange-500 to-red-600' },
+            ];
+
+            return (
+                <div className="max-w-4xl mx-auto pt-10 animate-fade-in">
+                    <h1 className="text-4xl md:text-5xl font-black text-center text-theme-highlight mb-2">Welcome to Jek Cal's</h1>
+                    <p className="text-center text-theme-muted mb-12">Pilih alat bantu Growtopia yang kamu butuhkan.</p>
+                    
+                    <ServerStatus />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-4">
+                        {menus.map(menu => (
+                            <button 
+                                key={menu.id}
+                                disabled={menu.disabled}
+                                onClick={() => !menu.disabled && setPage(menu.id)}
+                                className={`group relative overflow-hidden rounded-3xl p-6 text-left transition-all hover:scale-[1.02] ${menu.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-2xl'}`}
+                            >
+                                <div className={`absolute inset-0 bg-gradient-to-br ${menu.color} opacity-20 group-hover:opacity-30 transition-opacity`}></div>
+                                <div className="absolute inset-0 border border-white/10 rounded-3xl"></div>
+                                <div className="relative z-10 flex items-start justify-between">
+                                    <div>
+                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${menu.color} flex items-center justify-center text-white mb-4 shadow-lg overflow-hidden`}>
+                                            {menu.imgSrc ? (
+                                                <img src={menu.imgSrc} alt={menu.title} className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
+                                            ) : (
+                                                <menu.icon size={24}/>
+                                            )}
+                                        </div>
+                                        <h3 className="text-xl font-bold text-theme-highlight mb-1">{menu.title}</h3>
+                                        <p className="text-sm text-theme-muted">{menu.desc}</p>
+                                    </div>
+                                    {!menu.disabled && (
+                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors text-theme-main">
+                                            <Icons.ArrowLeft size={16} className="rotate-180"/>
+                                        </div>
+                                    )}
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [page, setPage] = useState('dashboard');
+            const [theme, setTheme] = useState('dark');
+
+            const toggleTheme = () => {
+                const newTheme = theme === 'dark' ? 'light' : 'dark';
+                setTheme(newTheme);
+            };
+
+            useEffect(() => {
+                document.documentElement.setAttribute('data-theme', theme);
+            }, [theme]);
+
+            return (
+                <div className="min-h-screen pb-10">
+                    <Navbar activePage={page} setPage={setPage} theme={theme} toggleTheme={toggleTheme} />
+                    <div className="pt-24 px-4 md:px-8 max-w-7xl mx-auto">
+                        {page === 'dashboard' && <Dashboard setPage={setPage} />}
+                        {page === 'role' && <RoleCalculator />}
+                        {page === 'xp' && <XpLevelCalculator />}
+                        {page === 'surgery' && <ShopCalculator title="Surgery Shop" icon={Icons.ShoppingBag} items={SURGERY_ITEMS} defaultPrice={7000} />}
+                        {page === 'startopia' && <ShopCalculator title="Startopia Shop" icon={Icons.Rocket} items={STARTOPIA_ITEMS} defaultPrice={5000} />}
+                        {page === 'bbm' && <BBMShopCalculator />}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
