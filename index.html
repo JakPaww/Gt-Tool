@@ -458,37 +458,34 @@
             const points = history.map((val, i) => {
                 const x = (i / (history.length - 1 || 1)) * 100;
                 const y = 100 - ((val - minVal) / range) * 100;
-                return `${x},${y}`;
-            }).join(' ');
+                return { x, y };
+            });
 
-            // Create smooth curve path using cardinal spline
-            const createSmoothPath = (points) => {
-                const coords = points.split(' ').map(p => p.split(',').map(Number));
-                if (coords.length < 2) return `M 0,50 L 100,50`;
+            // Create smooth curve path
+            const createSmoothPath = () => {
+                if (points.length < 2) return 'M 0,50 L 100,50';
                 
-                let path = `M ${coords[0][0]},${coords[0][1]}`;
+                let path = `M ${points[0].x},${points[0].y}`;
                 
-                for (let i = 0; i < coords.length - 1; i++) {
-                    const [x0, y0] = coords[i];
-                    const [x1, y1] = coords[i + 1];
-                    const [x2, y2] = coords[i + 2] || [x1, y1];
+                for (let i = 0; i < points.length - 1; i++) {
+                    const curr = points[i];
+                    const next = points[i + 1];
+                    const prev = points[i - 1] || curr;
+                    const afterNext = points[i + 2] || next;
                     
-                    // Calculate control points for smooth bezier curve
                     const tension = 0.3;
-                    const cp1x = x0 + (x1 - (coords[i - 1] ? coords[i - 1][0] : x0)) * tension;
-                    const cp1y = y0 + (y1 - (coords[i - 1] ? coords[i - 1][1] : y0)) * tension;
-                    const cp2x = x1 - (x2 - x0) * tension;
-                    const cp2y = y1 - (y2 - y0) * tension;
+                    const cp1x = curr.x + (next.x - prev.x) * tension;
+                    const cp1y = curr.y + (next.y - prev.y) * tension;
+                    const cp2x = next.x - (afterNext.x - curr.x) * tension;
+                    const cp2y = next.y - (afterNext.y - curr.y) * tension;
                     
-                    path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${x1},${y1}`;
+                    path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${next.x},${next.y}`;
                 }
                 
                 return path;
             };
 
-            const smoothPath = createSmoothPath(points);
-            
-            // Area fill path (untuk gradient fill)
+            const smoothPath = createSmoothPath();
             const areaPath = `${smoothPath} L 100,100 L 0,100 Z`;
 
             const handleMouseMove = (e) => {
@@ -500,13 +497,12 @@
                 const dataIndex = Math.round((percentX / 100) * (history.length - 1));
                 const clampedIndex = Math.max(0, Math.min(history.length - 1, dataIndex));
                 const value = history[clampedIndex];
-                const dataX = (clampedIndex / (history.length - 1 || 1)) * 100;
-                const dataY = 100 - ((value - minVal) / range) * 100;
+                const point = points[clampedIndex];
                 
                 setTooltip({
                     show: true,
-                    x: (dataX / 100) * rect.width,
-                    y: (dataY / 100) * rect.height,
+                    x: (point.x / 100) * rect.width,
+                    y: (point.y / 100) * rect.height,
                     value: value,
                     index: clampedIndex
                 });
@@ -629,13 +625,11 @@
                                     onMouseMove={handleMouseMove}
                                     onMouseLeave={handleMouseLeave}
                                 >
-                                    {/* Gradient definitions */}
                                     <defs>
                                         <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                                             <stop offset="0%" style={{stopColor: isRealData ? '#10b981' : '#f59e0b', stopOpacity: 0.4}} />
                                             <stop offset="100%" style={{stopColor: isRealData ? '#10b981' : '#f59e0b', stopOpacity: 0.05}} />
                                         </linearGradient>
-                                        
                                         <filter id="glow">
                                             <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
                                             <feMerge>
@@ -651,12 +645,9 @@
                                     <line x1="0" y1="75" x2="100" y2="75" stroke="currentColor" strokeWidth="0.3" className="text-theme-muted opacity-20" vectorEffect="non-scaling-stroke" />
                                     
                                     {/* Area fill */}
-                                    <path 
-                                        d={areaPath} 
-                                        fill="url(#chartGradient)"
-                                    />
+                                    <path d={areaPath} fill="url(#chartGradient)" />
                                     
-                                    {/* Main line with smooth curve */}
+                                    {/* Main smooth line */}
                                     <path 
                                         d={smoothPath} 
                                         fill="none" 
@@ -665,31 +656,26 @@
                                         className={isRealData ? "text-emerald-500" : "text-yellow-500"}
                                         vectorEffect="non-scaling-stroke"
                                         filter="url(#glow)"
-                                        strokeLinejoin="round"
-                                        strokeLinecap="round"
                                     />
                                     
                                     {/* Hover indicator */}
                                     {tooltip.show && (
-                                        <>
-                                            {/* Vertical line */}
-                                            <line
-                                                x1={(tooltip.index / (history.length - 1 || 1)) * 100}
-                                                y1="0"
-                                                x2={(tooltip.index / (history.length - 1 || 1)) * 100}
-                                                y2="100"
-                                                stroke="currentColor"
-                                                strokeWidth="1"
-                                                className={isRealData ? "text-emerald-400" : "text-yellow-400"}
-                                                opacity="0.3"
-                                                strokeDasharray="2,2"
-                                                vectorEffect="non-scaling-stroke"
-                                            />
-                                        </>
+                                        <line
+                                            x1={points[tooltip.index].x}
+                                            y1="0"
+                                            x2={points[tooltip.index].x}
+                                            y2="100"
+                                            stroke="currentColor"
+                                            strokeWidth="1"
+                                            className={isRealData ? "text-emerald-400" : "text-yellow-400"}
+                                            opacity="0.3"
+                                            strokeDasharray="2,2"
+                                            vectorEffect="non-scaling-stroke"
+                                        />
                                     )}
                                 </svg>
                                 
-                                {/* Perfect circle overlay (outside SVG to avoid squashing) */}
+                                {/* Perfect circle overlay */}
                                 {tooltip.show && (
                                     <div 
                                         className="absolute pointer-events-none"
@@ -750,6 +736,22 @@
                             
                             {/* X-axis labels */}
                             <div className="flex justify-between text-[10px] text-theme-muted mt-2 font-mono">
+                                <span>-5min</span>
+                                <span>-2.5min</span>
+                                <span>Now</span>
+                            </div>
+                        </div>
+
+                        {/* Info Footer */}
+                        <div className="mt-4 text-xs text-theme-muted text-center">
+                            {isRealData 
+                                ? "✅ Real-time data from growtopiagame.com" 
+                                : "⚠️ Connection failed - Showing simulated data"}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
 
         const BBMList = () => {
             return (
