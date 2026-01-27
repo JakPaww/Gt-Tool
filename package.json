@@ -1,6 +1,7 @@
 {
   "name": "growtopia-tools",
   "version": "1.0.0",
+  "type": "module",
   "description": "Growtopia Calculator Tools dengan Server Status Checker",
   "main": "index.html",
   "scripts": {
@@ -14,8 +15,5 @@
     "serverless"
   ],
   "author": "Jek Cal",
-  "license": "MIT",
-  "devDependencies": {
-    "vercel": "^33.0.0"
-  }
+  "license": "MIT"
 }
