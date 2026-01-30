@@ -993,6 +993,8 @@
             const [targetLevel, setTargetLevel] = useState(10);
             const [dailyQuests, setDailyQuests] = useState(1);
             const [hasCape, setHasCape] = useState(false);
+            const [useRoleDay, setUseRoleDay] = useState(true);
+            const [useAllRoleDay, setUseAllRoleDay] = useState(true);
 
             useEffect(() => {
                 if (ROLES.CRAFTER.includes(selectedRole)) setRoleType("CRAFTER");
@@ -1005,6 +1007,10 @@
                 const data = LEVEL_DATA[roleType];
                 const costs = GEM_COSTS[roleType];
                 const capeBonus = hasCape ? 1.05 : 1.0;
+                
+                // Role Day bonus: +25% XP (1x per week)
+                // All Role Day bonus: +25% XP (1x per week)
+                // Total bonus minggu ini: 2x 25% = 50% ekstra XP
                 
                 let totalPointsNeeded = 0;
                 let totalQuests = 0;
@@ -1032,17 +1038,55 @@
                 }
 
                 const totalDays = Math.ceil(totalQuests / dailyQuests);
+                
+                // Calculate weeks
+                const totalWeeks = Math.ceil(totalDays / 7);
+                
+                // Bonus XP dari Role Days
+                let bonusQuestsFromRoleDay = 0;
+                let bonusQuestsFromAllRoleDay = 0;
+                
+                if (useRoleDay) {
+                    // Role Day: 1x per week, +25% XP
+                    // Bonus = dailyQuests * 0.25 per week
+                    bonusQuestsFromRoleDay = totalWeeks * dailyQuests * 0.25;
+                }
+                
+                if (useAllRoleDay) {
+                    // All Role Day: 1x per week, +25% XP
+                    bonusQuestsFromAllRoleDay = totalWeeks * dailyQuests * 0.25;
+                }
+                
+                const totalBonusQuests = bonusQuestsFromRoleDay + bonusQuestsFromAllRoleDay;
+                
+                // Adjusted total quests needed (karena ada bonus XP)
+                const adjustedTotalQuests = Math.max(0, totalQuests - Math.floor(totalBonusQuests));
+                const adjustedTotalDays = Math.ceil(adjustedTotalQuests / dailyQuests);
+                
+                // Calculate gems
                 let totalGems = 0;
                 const costPerFullDay = GEM_COSTS[roleType].slice(0, dailyQuests).reduce((a,b)=>a+b, 0);
-                totalGems += Math.floor(totalQuests / dailyQuests) * costPerFullDay;
+                totalGems += Math.floor(adjustedTotalQuests / dailyQuests) * costPerFullDay;
                 
-                const remainingQuests = totalQuests % dailyQuests;
+                const remainingQuests = adjustedTotalQuests % dailyQuests;
                 for(let q=0; q < remainingQuests; q++) {
                     if(q < costs.length) totalGems += costs[q];
                 }
 
-                return { totalPointsNeeded, totalQuests, totalDays, totalGems, breakdown };
-            }, [roleType, startLevel, currentPoints, targetLevel, dailyQuests, hasCape]);
+                return { 
+                    totalPointsNeeded, 
+                    totalQuests, 
+                    totalDays, 
+                    totalGems, 
+                    breakdown,
+                    bonusQuestsFromRoleDay,
+                    bonusQuestsFromAllRoleDay,
+                    totalBonusQuests,
+                    adjustedTotalQuests,
+                    adjustedTotalDays,
+                    totalWeeks
+                };
+            }, [roleType, startLevel, currentPoints, targetLevel, dailyQuests, hasCape, useRoleDay, useAllRoleDay]);
 
             const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(num);
 
@@ -1059,7 +1103,9 @@
                                     </button>
                                 ))}
                             </div>
-                            <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/5">
+                            
+                            {/* Cape Toggle */}
+                            <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/5 mb-3">
                                 <div className="flex items-center gap-2">
                                     <Icons.Shirt size={18} className={hasCape ? "text-yellow-400" : "text-slate-500"}/>
                                     <div>
@@ -1071,7 +1117,36 @@
                                     <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${hasCape ? 'translate-x-6' : ''}`}></div>
                                 </button>
                             </div>
+                            
+                            {/* Role Day Toggle */}
+                            <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/5 mb-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="text-2xl">🎯</div>
+                                    <div>
+                                        <div className="text-sm font-bold text-theme-main">Role Day</div>
+                                        <div className="text-xs text-theme-muted">+25% XP (1x/week)</div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setUseRoleDay(!useRoleDay)} className={`w-12 h-6 rounded-full transition-colors relative ${useRoleDay ? 'bg-emerald-500' : 'bg-slate-700'}`}>
+                                    <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${useRoleDay ? 'translate-x-6' : ''}`}></div>
+                                </button>
+                            </div>
+                            
+                            {/* All Role Day Toggle */}
+                            <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/5">
+                                <div className="flex items-center gap-2">
+                                    <div className="text-2xl">🌟</div>
+                                    <div>
+                                        <div className="text-sm font-bold text-theme-main">All Role Day</div>
+                                        <div className="text-xs text-theme-muted">+25% XP (1x/week)</div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setUseAllRoleDay(!useAllRoleDay)} className={`w-12 h-6 rounded-full transition-colors relative ${useAllRoleDay ? 'bg-purple-500' : 'bg-slate-700'}`}>
+                                    <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${useAllRoleDay ? 'translate-x-6' : ''}`}></div>
+                                </button>
+                            </div>
                         </div>
+                        
                         <div className="glass-panel p-5 rounded-2xl space-y-6">
                             <div>
                                 <div className="flex justify-between mb-2 text-sm text-theme-muted">
@@ -1094,20 +1169,65 @@
                             </div>
                         </div>
                     </div>
+                    
                     <div className="lg:col-span-8 space-y-4">
+                        {/* Bonus Info Card */}
+                        {(useRoleDay || useAllRoleDay) && (
+                            <div className="glass-panel p-4 rounded-xl border-2 border-emerald-500/30 bg-emerald-500/5">
+                                <div className="flex items-start gap-3">
+                                    <div className="text-3xl">🎁</div>
+                                    <div className="flex-1">
+                                        <div className="text-sm font-bold text-emerald-400 mb-2">Weekly Bonus Active!</div>
+                                        <div className="grid grid-cols-2 gap-4 text-xs">
+                                            {useRoleDay && (
+                                                <div className="bg-black/20 p-2 rounded">
+                                                    <div className="text-theme-muted">Role Day Bonus</div>
+                                                    <div className="text-emerald-400 font-bold">-{formatNumber(Math.floor(calculation.bonusQuestsFromRoleDay))} quests</div>
+                                                </div>
+                                            )}
+                                            {useAllRoleDay && (
+                                                <div className="bg-black/20 p-2 rounded">
+                                                    <div className="text-theme-muted">All Role Day Bonus</div>
+                                                    <div className="text-purple-400 font-bold">-{formatNumber(Math.floor(calculation.bonusQuestsFromAllRoleDay))} quests</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="mt-2 text-xs text-theme-muted">
+                                            Total saving: <span className="text-emerald-400 font-bold">-{formatNumber(Math.floor(calculation.totalBonusQuests))} quests</span> over {calculation.totalWeeks} week{calculation.totalWeeks > 1 ? 's' : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="md:col-span-2 glass-panel p-6 rounded-2xl relative overflow-hidden border-yellow-500/20" style={{background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(15, 23, 42, 0.1))'}}>
                                 <div className="relative z-10">
                                     <p className="text-yellow-500 font-bold text-xs uppercase tracking-widest">Estimasi Biaya Gems</p>
                                     <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-400 to-amber-600 font-mono mt-1">{formatNumber(calculation.totalGems)} 💎</h2>
+                                    {(useRoleDay || useAllRoleDay) && (
+                                        <p className="text-xs text-emerald-400 mt-2">
+                                            ✨ Dengan bonus: {formatNumber(calculation.adjustedTotalQuests)} quests (hemat {formatNumber(calculation.totalQuests - calculation.adjustedTotalQuests)} quests!)
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                             <div className="glass-panel p-4 rounded-2xl flex flex-col justify-center">
                                 <span className="text-theme-muted text-xs uppercase font-bold">Total Hari</span>
-                                <span className="text-3xl font-bold text-theme-highlight">{formatNumber(calculation.totalDays)}</span>
+                                <span className="text-3xl font-bold text-theme-highlight">
+                                    {(useRoleDay || useAllRoleDay) ? (
+                                        <>
+                                            <span className="line-through text-slate-600 text-xl mr-2">{formatNumber(calculation.totalDays)}</span>
+                                            {formatNumber(calculation.adjustedTotalDays)}
+                                        </>
+                                    ) : (
+                                        formatNumber(calculation.totalDays)
+                                    )}
+                                </span>
                                 <span className="text-theme-muted text-xs">Untuk mencapai target</span>
                             </div>
                         </div>
+                        
                         <div className="glass-panel rounded-2xl overflow-hidden h-[400px] flex flex-col">
                             <div className="p-4 border-b border-white/10 bg-black/5 font-bold text-theme-muted text-sm">Quest Roadmap</div>
                             <div className="overflow-auto flex-1 p-2">
