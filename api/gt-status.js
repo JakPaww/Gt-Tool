@@ -37,14 +37,13 @@ export default async function handler(req, res) {
 
   // Multiple proxy methods
   const fetchMethods = [
-    // Method 1: AllOrigins (Raw) - Seringkali paling reliable
+    // Method 1: AllOrigins (Raw) - Paling reliable tapi kadang lambat
     {
       name: 'AllOrigins',
       fetch: async () => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased to 15s
         try {
-          // Add timestamp to bypass cache
           const url = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://growtopiagame.com/detail') + '&t=' + Date.now();
           const response = await fetch(url, {
             signal: controller.signal,
@@ -60,12 +59,54 @@ export default async function handler(req, res) {
       }
     },
 
-    // Method 2: AllOrigins (Get) - Format JSON
+    // Method 2: ThingProxy (Restore this!)
+    {
+      name: 'ThingProxy',
+      fetch: async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        try {
+          const url = 'https://thingproxy.freeboard.io/fetch/' + encodeURIComponent('https://growtopiagame.com/detail');
+          const response = await fetch(url, {
+            signal: controller.signal,
+            headers: getRandomHeaders()
+          });
+          clearTimeout(timeoutId);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const text = await response.text();
+          return JSON.parse(text);
+        } catch (e) {
+          clearTimeout(timeoutId);
+          throw e;
+        }
+      }
+    },
+
+    // Method 3: JSONProxy (Restore this!)
+    {
+      name: 'JSONProxy',
+      fetch: async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        try {
+          const url = 'https://jsonp.afeld.me/?url=' + encodeURIComponent('https://growtopiagame.com/detail');
+          const response = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.json();
+        } catch (error) {
+          clearTimeout(timeoutId);
+          throw error;
+        }
+      }
+    },
+
+    // Method 4: AllOrigins (Get) - Fallback
     {
       name: 'AllOriginsGet',
       fetch: async () => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         try {
           const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://growtopiagame.com/detail') + '&t=' + Date.now();
           const response = await fetch(url, { signal: controller.signal });
@@ -81,8 +122,29 @@ export default async function handler(req, res) {
       }
     },
 
-    // Method 3: Direct (Dengan Headers Lengkap)
-    // Kadang Vercel IP tidak di-block jika headers mirip browser
+    // Method 5: CorsProxy.io
+    {
+      name: 'CorsProxyIO',
+      fetch: async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        try {
+          const url = 'https://corsproxy.io/?' + encodeURIComponent('https://growtopiagame.com/detail');
+          const response = await fetch(url, {
+            headers: getRandomHeaders(),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.json();
+        } catch (e) {
+          clearTimeout(timeoutId);
+          throw e;
+        }
+      }
+    },
+
+    // Method 6: Direct (Last Resort)
     {
       name: 'DirectSmart',
       fetch: async () => {
@@ -101,35 +163,13 @@ export default async function handler(req, res) {
           throw error;
         }
       }
-    },
-
-    // Method 4: CorsProxy.io (Alternative)
-    {
-      name: 'CorsProxyIO',
-      fetch: async () => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
-        try {
-          const url = 'https://corsproxy.io/?' + encodeURIComponent('https://growtopiagame.com/detail');
-          const response = await fetch(url, {
-            headers: getRandomHeaders(),
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          return await response.json();
-        } catch (e) {
-          clearTimeout(timeoutId);
-          throw e;
-        }
-      }
     }
   ];
 
   const errors = [];
   const startTime = Date.now();
 
-  // Try each method
+  // Try each method w/ small delay between failures
   for (const method of fetchMethods) {
     try {
       console.log(`[${new Date().toISOString()}] Trying ${method.name}...`);
@@ -155,8 +195,6 @@ export default async function handler(req, res) {
       const errorMsg = `${method.name}: ${error.message}`;
       console.error(`[FAIL] ${errorMsg}`);
       errors.push(errorMsg);
-      // If error is 403/429, wait a bit before next method? 
-      // Nah, just simple failover for now.
     }
   }
 
