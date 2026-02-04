@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,15 +9,20 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+
     <style>
         :root {
             /* Default to Dark Mode Variables */
             --bg-color: #0f172a;
-            --bg-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-                        radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-                        radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            --bg-image: radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
             --text-main: #e2e8f0;
             --text-muted: #94a3b8;
             --text-highlight: #ffffff;
@@ -32,9 +38,9 @@
         [data-theme='light'] {
             /* Light Mode Variables */
             --bg-color: #f0f9ff;
-            --bg-image: radial-gradient(at 0% 0%, #e0f2fe 0, transparent 50%), 
-                        radial-gradient(at 50% 100%, #bae6fd 0, transparent 50%), 
-                        radial-gradient(at 100% 0%, #f0f9ff 0, transparent 50%);
+            --bg-image: radial-gradient(at 0% 0%, #e0f2fe 0, transparent 50%),
+                radial-gradient(at 50% 100%, #bae6fd 0, transparent 50%),
+                radial-gradient(at 100% 0%, #f0f9ff 0, transparent 50%);
             --text-main: #334155;
             --text-muted: #64748b;
             --text-highlight: #0f172a;
@@ -57,10 +63,23 @@
         }
 
         /* Utilities */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.1); }
-        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
 
         .glass-panel {
             background: var(--panel-bg);
@@ -70,7 +89,7 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             transition: background 0.3s ease, border 0.3s ease;
         }
-        
+
         .glass-nav {
             background: var(--nav-bg);
             backdrop-filter: blur(16px);
@@ -84,80 +103,253 @@
             color: var(--text-highlight);
             transition: all 0.3s ease;
         }
+
         .glass-input:focus {
             background: var(--input-focus);
             border-color: var(--accent-blue);
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
             outline: none;
         }
-        
-        [data-theme='light'] .glass-input::placeholder { color: #94a3b8; }
-        [data-theme='dark'] .glass-input::placeholder { color: #64748b; }
 
-        input[type=range] { -webkit-appearance: none; background: transparent; }
+        [data-theme='light'] .glass-input::placeholder {
+            color: #94a3b8;
+        }
+
+        [data-theme='dark'] .glass-input::placeholder {
+            color: #64748b;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%;
-            background: #f8fafc; cursor: pointer; margin-top: -6px; 
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            border: 1px solid rgba(0,0,0,0.1);
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #f8fafc;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(0, 0, 0, 0.1);
         }
+
         input[type=range]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px; cursor: pointer;
-            background: var(--panel-border); border-radius: 2px;
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: var(--panel-border);
+            border-radius: 2px;
         }
-        
+
         .animate-fade-in {
             animation: fadeIn 0.5s ease-out forwards;
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
-        .toggle-checkbox:checked { right: 0; border-color: #68D391; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
+
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+
+        .toggle-checkbox:checked+.toggle-label {
+            background-color: #68D391;
+        }
 
         /* Ping Animation for Status */
         .ping {
             animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
         }
+
         @keyframes ping {
-            75%, 100% {
+
+            75%,
+            100% {
                 transform: scale(2);
                 opacity: 0;
             }
         }
     </style>
 </head>
+
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useMemo, useEffect, useRef } = React;
+        const { useState, useMemo, useEffect, useRef, useCallback } = React;
+
+        // --- FIREBASE SETUP ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ7L7-xKPVnynLua8lVXQCQLJL139vtlo",
+            authDomain: "gt-tools-627f9.firebaseapp.com",
+            projectId: "gt-tools-627f9",
+            storageBucket: "gt-tools-627f9.firebasestorage.app",
+            messagingSenderId: "633849365353",
+            appId: "1:633849365353:web:ed852dc913a01d8fbc73f8",
+            measurementId: "G-NV098SR8V2"
+        };
+
+        // Initialize Firebase safely
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        // --- FIREBASE HELPERS ---
+        const usePresets = (collectionName, currentData, onLoad) => {
+            const [presets, setPresets] = useState([]);
+            const [presetName, setPresetName] = useState("");
+            const [loading, setLoading] = useState(false);
+
+            // Load presets on mount
+            useEffect(() => {
+                const unsubscribe = db.collection(collectionName)
+                    .orderBy("timestamp", "desc")
+                    .onSnapshot(snapshot => {
+                        const loaded = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        setPresets(loaded);
+                    });
+                return () => unsubscribe();
+            }, [collectionName]);
+
+            const savePreset = async () => {
+                if (!presetName.trim()) return alert("Masukkan nama preset!");
+                setLoading(true);
+                try {
+                    await db.collection(collectionName).add({
+                        name: presetName,
+                        data: currentData,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    setPresetName("");
+                    alert("Preset berhasil disimpan!");
+                } catch (error) {
+                    console.error("Error saving preset:", error);
+                    alert("Gagal menyimpan preset.");
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const loadPreset = (preset) => {
+                if (window.confirm(`Load preset "${preset.name}"? Data saat ini akan tertimpa.`)) {
+                    onLoad(preset.data);
+                }
+            };
+
+            const deletePreset = async (id) => {
+                if (window.confirm("Hapus preset ini?")) {
+                    try {
+                        await db.collection(collectionName).doc(id).delete();
+                    } catch (error) {
+                        console.error("Error deleting preset:", error);
+                    }
+                }
+            };
+
+            return { presets, presetName, setPresetName, loading, savePreset, loadPreset, deletePreset };
+        };
+
+        const PresetManager = ({ hook }) => {
+            const { presets, presetName, setPresetName, loading, savePreset, loadPreset, deletePreset } = hook;
+            const [isOpen, setIsOpen] = useState(false);
+
+            return (
+                <div className="glass-panel p-4 rounded-xl mb-6 border border-white/10">
+                    <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        className="flex items-center gap-2 text-sm font-bold text-theme-highlight w-full justify-between"
+                    >
+                        <span className="flex items-center gap-2"><Icons.Cube size={16} /> Preset Manager</span>
+                        <span className="text-xs text-theme-muted">{isOpen ? '▼' : '►'}</span>
+                    </button>
+
+                    {isOpen && (
+                        <div className="mt-4 animate-fade-in space-y-4">
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={presetName}
+                                    onChange={(e) => setPresetName(e.target.value)}
+                                    placeholder="Nama Preset Baru..."
+                                    className="glass-input flex-1 px-3 py-2 rounded-lg text-sm"
+                                />
+                                <button
+                                    onClick={savePreset}
+                                    disabled={loading}
+                                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-bold disabled:opacity-50"
+                                >
+                                    {loading ? 'Saving...' : 'Save'}
+                                </button>
+                            </div>
+
+                            <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                                {presets.length === 0 ? (
+                                    <div className="text-center text-xs text-theme-muted py-2">Belum ada preset tersimpan.</div>
+                                ) : (
+                                    presets.map(p => (
+                                        <div key={p.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 group">
+                                            <span className="text-sm font-mono text-theme-main">{p.name}</span>
+                                            <div className="flex gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => loadPreset(p)} className="p-1 text-emerald-400 hover:text-emerald-300" title="Load">
+                                                    <Icons.Refresh size={14} />
+                                                </button>
+                                                <button onClick={() => deletePreset(p.id)} className="p-1 text-red-400 hover:text-red-300" title="Delete">
+                                                    <Icons.Trash size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
 
         // --- ICONS ---
         const IconBase = ({ children, size = 20, className = "" }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
         );
+
         const Icons = {
-            Home: (p) => <IconBase {...p}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></IconBase>,
-            Calculator: (p) => <IconBase {...p}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></IconBase>,
-            ShoppingBag: (p) => <IconBase {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></IconBase>,
-            User: (p) => <IconBase {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconBase>,
-            Shirt: (p) => <IconBase {...p}><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></IconBase>,
-            ArrowLeft: (p) => <IconBase {...p}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></IconBase>,
-            Rocket: (p) => <IconBase {...p}><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></IconBase>,
-            Ghost: (p) => <IconBase {...p}><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></IconBase>,
-            Cube: (p) => <IconBase {...p}><path d="m21 16-9 4-9-4"/><path d="m21 8-9 4-9-4"/><path d="M3 12v8l9 4 9-4v-8"/></IconBase>,
-            Refresh: (p) => <IconBase {...p}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></IconBase>,
-            Sun: (p) => <IconBase {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></IconBase>,
-            Moon: (p) => <IconBase {...p}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></IconBase>,
-            Activity: (p) => <IconBase {...p}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></IconBase>
+            Home: (p) => <IconBase {...p}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></IconBase>,
+            Calculator: (p) => <IconBase {...p}><rect width="16" height="20" x="4" y="2" rx="2" /><line x1="8" x2="16" y1="6" y2="6" /><line x1="16" x2="16" y1="14" y2="18" /><path d="M16 10h.01" /><path d="M12 10h.01" /><path d="M8 10h.01" /><path d="M12 14h.01" /><path d="M8 14h.01" /><path d="M12 18h.01" /><path d="M8 18h.01" /></IconBase>,
+            ShoppingBag: (p) => <IconBase {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></IconBase>,
+            User: (p) => <IconBase {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></IconBase>,
+            Shirt: (p) => <IconBase {...p}><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" /></IconBase>,
+            ArrowLeft: (p) => <IconBase {...p}><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></IconBase>,
+            Rocket: (p) => <IconBase {...p}><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" /><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" /><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" /><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /></IconBase>,
+            Ghost: (p) => <IconBase {...p}><path d="M9 10h.01" /><path d="M15 10h.01" /><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z" /></IconBase>,
+            Cube: (p) => <IconBase {...p}><path d="m21 16-9 4-9-4" /><path d="m21 8-9 4-9-4" /><path d="M3 12v8l9 4 9-4v-8" /></IconBase>,
+            Refresh: (p) => <IconBase {...p}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 16h5v5" /></IconBase>,
+            Trash: (p) => <IconBase {...p}><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></IconBase>,
+            Sun: (p) => <IconBase {...p}><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></IconBase>,
+            Moon: (p) => <IconBase {...p}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></IconBase>,
+            Activity: (p) => <IconBase {...p}><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></IconBase>,
+            Calendar: (p) => <IconBase {...p}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></IconBase>
         };
 
         const WL_ICON = "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3872/y-offset/0/window-width/32/window-height/32?format=webp&fill=cb-20260115085450";
         const GHOST_JAR_ICON = "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2176/y-offset/448/window-width/32/window-height/32?format=webp&fill=cb-20260115085450";
-        
+
         // --- MENU ICONS ---
         const SURG_ICON = "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3200/y-offset/512/window-width/32/window-height/32?format=webp&fill=cb-20260115085450";
         const DRONE_ICON = "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2112/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450";
@@ -223,7 +415,7 @@
             { name: "Flamingo", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/736/y-offset/352/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Sand Bucket", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/960/y-offset/1696/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Sandtopian", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/544/y-offset/1696/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
-            
+
             // EXCLUSIVE TO MACHINE (The Big Ones)
             { name: "Black Leather Couch", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/544/y-offset/1120/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Chimney", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/480/y-offset/1120/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
@@ -252,7 +444,7 @@
             { name: "Slick Blue Block", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3904/y-offset/1536/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Slick Green Block", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3936/y-offset/1536/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Slick Red Block", cat: "exclusive", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3872/y-offset/1536/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
-            
+
             // EVENT EXCLUSIVES
             { name: "Buddy of Stone", cat: "event", eventCat: "valentine", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1056/y-offset/1632/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Cotton Candy Clouds", cat: "event", eventCat: "valentine", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2816/y-offset/1440/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
@@ -260,31 +452,31 @@
             { name: "Love Ladder", cat: "event", eventCat: "valentine", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2400/y-offset/1312/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Towering Hair", cat: "event", eventCat: "valentine", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2848/y-offset/1440/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Ceremonial Altar", cat: "event", eventCat: "valentine", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1536/y-offset/1888/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
-            
+
             { name: "Shamrock Checkpoint", cat: "event", eventCat: "stpatrick", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3488/y-offset/1440/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Shepard's Pie Block", cat: "event", eventCat: "stpatrick", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3392/y-offset/1440/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "St Pat Wall Green", cat: "event", eventCat: "stpatrick", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3424/y-offset/1312/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "St Pat Wall White", cat: "event", eventCat: "stpatrick", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3392/y-offset/1312/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "The Wonderful Barn", cat: "event", eventCat: "stpatrick", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/608/y-offset/1664/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
-            
+
             { name: "Candy Brick Wall", cat: "event", eventCat: "grow4good", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1440/y-offset/1792/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
-            
+
             { name: "Gaekkebrev", cat: "event", eventCat: "easter", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/576/y-offset/1472/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Sunnyside Yolkfall", cat: "event", eventCat: "easter", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1152/y-offset/1664/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Sweet Bunny Checkpoint", cat: "event", eventCat: "easter", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/768/y-offset/1920/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
-            
+
             { name: "Taco Window", cat: "event", eventCat: "cinco", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2048/y-offset/1344/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
-            
+
             { name: "Super Pineapple Door", cat: "event", eventCat: "pineapple", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/3680/y-offset/1472/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
-            
+
             { name: "Summer Checkpoint", cat: "event", eventCat: "summerfest", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/192/y-offset/1216/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Tropical Bar", cat: "event", eventCat: "summerfest", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/736/y-offset/1376/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Tropical Bar Stool", cat: "event", eventCat: "summerfest", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/768/y-offset/1376/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
-            
+
             { name: "Rice Crop Wallpaper", cat: "event", eventCat: "harvest", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/224/y-offset/1408/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
-            
+
             { name: "Kooky Checkpoint", cat: "event", eventCat: "halloween", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2688/y-offset/1728/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
-            
+
             // Misc
             { name: "Dark Chocolate Block", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/96/y-offset/320/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { name: "Diamond-Encrusted Jade", cat: "standard", img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2464/y-offset/320/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
@@ -342,7 +534,7 @@
             { id: 12, name: "Tactical Drone", qty: 5, priceType: 'special_200', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2112/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" },
             { id: 13, name: "Teleporter Charge", qty: 5, priceType: 'special_200', img: "https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2016/y-offset/800/window-width/32/window-height/32?format=webp&fill=cb-20260115085450" }
         ];
-        
+
         const XP_ITEMS = [
             { id: 'charm', name: 'Ghost Dragon Charm', desc: '+180 XP / jar', bonus: 180, type: 'flat', img: 'https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/1120/y-offset/960/window-width/32/window-height/32?format=webp&fill=cb-20260115085450' },
             { id: 'tart', name: 'Coconut Tart', desc: '+30 XP / jar', bonus: 30, type: 'flat', img: 'https://static.wikia.nocookie.net/growtopia/images/8/8f/ItemSprites.png/revision/latest/window-crop/width/32/x-offset/2304/y-offset/864/window-width/32/window-height/32?format=webp&fill=cb-20260115085450' },
@@ -357,8 +549,8 @@
         };
 
         const LEVEL_DATA = {
-            CRAFTER: [{req:1500,reward:230},{req:6000,reward:460},{req:13500,reward:690},{req:24000,reward:920},{req:37500,reward:1150},{req:54000,reward:1380},{req:73500,reward:1610},{req:96000,reward:1840},{req:121500,reward:2070},{req:150000,reward:2300}],
-            SUPPLIER: [{req:1300,reward:270},{req:5200,reward:540},{req:11700,reward:810},{req:20800,reward:1080},{req:32500,reward:1350},{req:46800,reward:1620},{req:63700,reward:1890},{req:83200,reward:2160},{req:105300,reward:2430},{req:130000,reward:2700}]
+            CRAFTER: [{ req: 1500, reward: 230 }, { req: 6000, reward: 460 }, { req: 13500, reward: 690 }, { req: 24000, reward: 920 }, { req: 37500, reward: 1150 }, { req: 54000, reward: 1380 }, { req: 73500, reward: 1610 }, { req: 96000, reward: 1840 }, { req: 121500, reward: 2070 }, { req: 150000, reward: 2300 }],
+            SUPPLIER: [{ req: 1300, reward: 270 }, { req: 5200, reward: 540 }, { req: 11700, reward: 810 }, { req: 20800, reward: 1080 }, { req: 32500, reward: 1350 }, { req: 46800, reward: 1620 }, { req: 63700, reward: 1890 }, { req: 83200, reward: 2160 }, { req: 105300, reward: 2430 }, { req: 130000, reward: 2700 }]
         };
 
         const GEM_COSTS = {
@@ -370,8 +562,8 @@
 
         const Navbar = ({ activePage, setPage, theme, toggleTheme }) => (
             <nav className="glass-nav fixed top-0 w-full z-50 px-4 md:px-8 h-16 flex items-center justify-between">
-                <div 
-                    className="flex items-center gap-3 cursor-pointer group" 
+                <div
+                    className="flex items-center gap-3 cursor-pointer group"
                     onClick={() => setPage('dashboard')}
                 >
                     <div className="bg-blue-600 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xl group-hover:scale-110 transition-transform">J</div>
@@ -379,206 +571,544 @@
                 </div>
                 <div className="flex gap-4 items-center">
                     {activePage !== 'dashboard' && (
-                        <button 
+                        <button
                             onClick={() => setPage('dashboard')}
                             className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors flex items-center gap-2 text-theme-main"
                         >
-                            <Icons.ArrowLeft size={16}/> Menu
+                            <Icons.ArrowLeft size={16} /> Menu
                         </button>
                     )}
-                    <button 
+                    <button
                         onClick={toggleTheme}
                         className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-theme-main transition-colors"
                         title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
                     >
-                        {theme === 'dark' ? <Icons.Sun size={20}/> : <Icons.Moon size={20}/>}
+                        {theme === 'dark' ? <Icons.Sun size={20} /> : <Icons.Moon size={20} />}
                     </button>
                 </div>
             </nav>
         );
+        // ============================================================================
+        // 🎯 COPY SEMUA CODE INI DAN PASTE KE index.html KAMU
+        // Letakkan SETELAH line Icons definition dan SEBELUM ServerStatus component
+        // ============================================================================
+
+        // ==================== TRANSLATIONS ====================
+        const TRANSLATIONS = {
+            id: {
+                wlTracker: 'WL/DL Tracker',
+                priceDatabase: 'Database Harga',
+                worldGenerator: 'World Generator',
+                recipeBook: 'Recipe Book',
+                eventCalendar: 'Event Calendar',
+                gemCalculator: 'Gem Calculator',
+                settings: 'Pengaturan',
+                language: 'Bahasa',
+                theme: 'Tema',
+                data: 'Data',
+            },
+            en: {
+                wlTracker: 'WL/DL Tracker',
+                priceDatabase: 'Price Database',
+                worldGenerator: 'World Generator',
+                recipeBook: 'Recipe Book',
+                eventCalendar: 'Event Calendar',
+                gemCalculator: 'Gem Calculator',
+                settings: 'Settings',
+                language: 'Language',
+                theme: 'Theme',
+                data: 'Data',
+            }
+        };
+
+        // ==================== HOOKS ====================
+        const useLocalStorage = (key, initialValue) => {
+            const [storedValue, setStoredValue] = useState(() => {
+                try {
+                    const item = window.localStorage.getItem(key);
+                    return item ? JSON.parse(item) : initialValue;
+                } catch (error) {
+                    return initialValue;
+                }
+            });
+            const setValue = (value) => {
+                try {
+                    const valueToStore = value instanceof Function ? value(storedValue) : value;
+                    setStoredValue(valueToStore);
+                    window.localStorage.setItem(key, JSON.stringify(valueToStore));
+                } catch (error) {
+                    console.error(error);
+                }
+            };
+            return [storedValue, setValue];
+        };
+
+        const useNotification = () => {
+            const [notifications, setNotifications] = useState([]);
+            const addNotification = useCallback((message, type = 'info') => {
+                const id = Date.now();
+                setNotifications(prev => [...prev, { id, message, type }]);
+                setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 3000);
+            }, []);
+            return { notifications, addNotification };
+        };
+
+        // ==================== NOTIFICATION CONTAINER ====================
+        const NotificationContainer = ({ notifications }) => {
+            if (!notifications.length) return null;
+            return (
+                <div className="fixed top-20 right-4 z-50 space-y-2">
+                    {notifications.map(notif => (
+                        <div key={notif.id} className={`notification glass-panel px-4 py-3 rounded-lg flex items-center gap-3 min-w-[300px] border-l-4 ${notif.type === 'success' ? 'border-green-500' : notif.type === 'error' ? 'border-red-500' : 'border-blue-500'
+                            }`}>
+                            <p className="text-sm text-theme-main">{notif.message}</p>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        // ==================== WL/DL TRACKER ====================
+        const WLTracker = ({ language = 'id', addNotification }) => {
+            const t = TRANSLATIONS[language] || TRANSLATIONS.id;
+            const [wlPrice, setWlPrice] = useLocalStorage('wl_price', 8500);
+            const [dlPrice, setDlPrice] = useLocalStorage('dl_price', 850000);
+            const [priceHistory, setPriceHistory] = useLocalStorage('price_history', []);
+            const [customWL, setCustomWL] = useState('');
+            const [customDL, setCustomDL] = useState('');
+
+            const updatePrice = (type) => {
+                const price = type === 'wl' ? parseFloat(customWL) : parseFloat(customDL);
+                if (!price || price <= 0) {
+                    addNotification('Harga tidak valid', 'error');
+                    return;
+                }
+                const entry = { type, price, timestamp: Date.now(), date: new Date().toLocaleDateString('id-ID') };
+                if (type === 'wl') { setWlPrice(price); setCustomWL(''); }
+                else { setDlPrice(price); setCustomDL(''); }
+                setPriceHistory(prev => [...prev, entry].slice(-50));
+                addNotification(`${type.toUpperCase()} price updated!`, 'success');
+            };
+
+            const getChange = (type) => {
+                const filtered = priceHistory.filter(h => h.type === type);
+                if (filtered.length < 2) return null;
+                const latest = filtered[filtered.length - 1].price;
+                const previous = filtered[filtered.length - 2].price;
+                const change = ((latest - previous) / previous) * 100;
+                return { value: change, isPositive: change > 0 };
+            };
+
+            const wlChange = getChange('wl');
+            const dlChange = getChange('dl');
+
+            return (
+                <div className="max-w-4xl mx-auto">
+                    <div className="glass-panel rounded-3xl p-6">
+                        <h2 className="text-2xl font-bold text-theme-highlight mb-6">{t.wlTracker}</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* WL Card */}
+                            <div className="glass-panel rounded-2xl p-6 border-2 border-yellow-500/30">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div className="text-sm text-theme-muted mb-1">World Lock</div>
+                                        <div className="text-3xl font-black text-yellow-500">Rp {wlPrice.toLocaleString()}</div>
+                                    </div>
+                                    {wlChange && (
+                                        <div className={`px-3 py-1.5 rounded-lg ${wlChange.isPositive ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+                                            <span className="text-sm font-bold">{wlChange.isPositive ? '↑' : '↓'} {Math.abs(wlChange.value).toFixed(2)}%</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    <input type="number" value={customWL} onChange={(e) => setCustomWL(e.target.value)} placeholder="Update harga..." className="glass-input flex-1 px-3 py-2 rounded-lg" />
+                                    <button onClick={() => updatePrice('wl')} className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition-colors">Update</button>
+                                </div>
+                            </div>
+
+                            {/* DL Card */}
+                            <div className="glass-panel rounded-2xl p-6 border-2 border-blue-500/30">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div className="text-sm text-theme-muted mb-1">Diamond Lock</div>
+                                        <div className="text-3xl font-black text-blue-500">Rp {dlPrice.toLocaleString()}</div>
+                                    </div>
+                                    {dlChange && (
+                                        <div className={`px-3 py-1.5 rounded-lg ${dlChange.isPositive ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+                                            <span className="text-sm font-bold">{dlChange.isPositive ? '↑' : '↓'} {Math.abs(dlChange.value).toFixed(2)}%</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    <input type="number" value={customDL} onChange={(e) => setCustomDL(e.target.value)} placeholder="Update harga..." className="glass-input flex-1 px-3 py-2 rounded-lg" />
+                                    <button onClick={() => updatePrice('dl')} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors">Update</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Converters */}
+                        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="glass-panel rounded-xl p-4">
+                                <div className="text-sm text-theme-muted">1 DL = {(dlPrice / wlPrice).toFixed(0)} WL</div>
+                            </div>
+                            <div className="glass-panel rounded-xl p-4">
+                                <div className="text-sm text-theme-muted">100 WL = Rp {(100 * wlPrice).toLocaleString()}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Price History */}
+                    {priceHistory.length > 0 && (
+                        <div className="glass-panel rounded-3xl p-6 mt-6">
+                            <h3 className="text-xl font-bold text-theme-highlight mb-4">Price History</h3>
+                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                                {priceHistory.slice().reverse().slice(0, 10).map((entry, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-3 glass-panel rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-2 h-2 rounded-full ${entry.type === 'wl' ? 'bg-yellow-500' : 'bg-blue-500'}`}></div>
+                                            <span className="font-medium text-theme-main">{entry.type.toUpperCase()}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="font-bold text-theme-highlight">Rp {entry.price.toLocaleString()}</div>
+                                            <div className="text-xs text-theme-muted">{entry.date}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // ==================== PRICE DATABASE ====================
+        const PriceDatabase = ({ language = 'id', addNotification }) => {
+            const t = TRANSLATIONS[language] || TRANSLATIONS.id;
+            const [items, setItems] = useLocalStorage('price_database', []);
+            const [search, setSearch] = useState('');
+            const [showAddModal, setShowAddModal] = useState(false);
+            const [newItem, setNewItem] = useState({ name: '', price: '', category: 'Other' });
+            const categories = ['Seeds', 'Blocks', 'Consumables', 'Tools', 'Wings', 'Other'];
+
+            const addItem = () => {
+                if (!newItem.name || !newItem.price) {
+                    addNotification('Nama dan harga wajib diisi', 'error');
+                    return;
+                }
+                const item = { id: Date.now(), ...newItem, price: parseFloat(newItem.price), addedAt: new Date().toISOString() };
+                setItems(prev => [...prev, item]);
+                setNewItem({ name: '', price: '', category: 'Other' });
+                setShowAddModal(false);
+                addNotification('Item ditambahkan!', 'success');
+            };
+
+            const deleteItem = (id) => {
+                setItems(prev => prev.filter(item => item.id !== id));
+                addNotification('Item dihapus', 'info');
+            };
+
+            const filteredItems = items.filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
+
+            return (
+                <div className="max-w-6xl mx-auto space-y-6">
+                    <div className="glass-panel rounded-3xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-2xl font-bold text-theme-highlight">{t.priceDatabase}</h2>
+                            <button onClick={() => setShowAddModal(true)} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium flex items-center gap-2">
+                                <Icons.Plus size={20} /> Add Item
+                            </button>
+                        </div>
+                        <div className="relative">
+                            <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-theme-muted" size={20} />
+                            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search items..." className="glass-input w-full pl-10 pr-4 py-3 rounded-lg" />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredItems.length === 0 ? (
+                            <div className="col-span-full text-center py-12">
+                                <Icons.Database className="mx-auto mb-4 text-theme-muted" size={48} />
+                                <p className="text-theme-muted">No items found. Add your first item!</p>
+                            </div>
+                        ) : (
+                            filteredItems.map(item => (
+                                <div key={item.id} className="glass-panel rounded-2xl p-4">
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div>
+                                            <h3 className="font-bold text-theme-highlight">{item.name}</h3>
+                                            <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-500">{item.category}</span>
+                                        </div>
+                                        <button onClick={() => deleteItem(item.id)} className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-500">
+                                            <Icons.Trash size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="text-2xl font-black text-yellow-500">{item.price} WL</div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {showAddModal && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                            <div className="glass-panel rounded-3xl p-6 max-w-md w-full">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xl font-bold text-theme-highlight">Add New Item</h3>
+                                    <button onClick={() => setShowAddModal(false)} className="p-2 rounded-lg hover:bg-white/10">
+                                        <Icons.X size={20} />
+                                    </button>
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-theme-main mb-2">Item Name</label>
+                                        <input type="text" value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} className="glass-input w-full px-3 py-2 rounded-lg" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-theme-main mb-2">Price (WL)</label>
+                                        <input type="number" value={newItem.price} onChange={(e) => setNewItem({ ...newItem, price: e.target.value })} className="glass-input w-full px-3 py-2 rounded-lg" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-theme-main mb-2">Category</label>
+                                        <select value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })} className="glass-input w-full px-3 py-2 rounded-lg">
+                                            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="flex gap-3 pt-4">
+                                        <button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 glass-panel rounded-lg font-medium hover:bg-white/10">Cancel</button>
+                                        <button onClick={addItem} className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium">Add</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // ==================== WORLD GENERATOR ====================
+        const WorldGenerator = ({ language = 'id', addNotification }) => {
+            const t = TRANSLATIONS[language] || TRANSLATIONS.id;
+            const [count, setCount] = useState(10);
+            const [length, setLength] = useState(3);
+            const [worlds, setWorlds] = useState([]);
+            const [excludeConfusing, setExcludeConfusing] = useState(true);
+
+            const generateWorlds = () => {
+                const chars = excludeConfusing ? 'ABCDEFGHJKLMNPQRSTUVWXYZ' : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                const newWorlds = [];
+                for (let i = 0; i < count; i++) {
+                    let world = '';
+                    for (let j = 0; j < length; j++) {
+                        world += chars[Math.floor(Math.random() * chars.length)];
+                    }
+                    newWorlds.push(world);
+                }
+                setWorlds(newWorlds);
+                addNotification(`${count} worlds generated!`, 'success');
+            };
+
+            const copyWorld = (world) => {
+                navigator.clipboard.writeText(world);
+                addNotification(`${world} copied!`, 'success');
+            };
+
+            return (
+                <div className="max-w-4xl mx-auto">
+                    <div className="glass-panel rounded-3xl p-6">
+                        <h2 className="text-2xl font-bold text-theme-highlight mb-6">{t.worldGenerator}</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div>
+                                <label className="block text-sm font-medium text-theme-main mb-2">How many worlds?</label>
+                                <input type="number" value={count} onChange={(e) => setCount(Math.min(100, Math.max(1, parseInt(e.target.value) || 1)))} min="1" max="100" className="glass-input w-full px-3 py-2 rounded-lg" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-theme-main mb-2">World length</label>
+                                <input type="number" value={length} onChange={(e) => setLength(Math.min(6, Math.max(2, parseInt(e.target.value) || 2)))} min="2" max="6" className="glass-input w-full px-3 py-2 rounded-lg" />
+                            </div>
+                            <div className="flex items-end">
+                                <button onClick={generateWorlds} className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium">Generate</button>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 mb-6">
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" checked={excludeConfusing} onChange={(e) => setExcludeConfusing(e.target.checked)} className="sr-only peer" />
+                                <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                            <span className="text-sm text-theme-main">Exclude confusing letters (I, O)</span>
+                        </div>
+                        {worlds.length > 0 && (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                                {worlds.map((world, idx) => (
+                                    <button key={idx} onClick={() => copyWorld(world)} className="glass-panel p-3 rounded-lg hover:bg-white/10 group">
+                                        <div className="font-mono font-bold text-theme-highlight group-hover:text-blue-500">{world}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // ============================================================================
+        // 🎯 SELESAI! SEMUA COMPONENT SIAP DIGUNAKAN
+        // ============================================================================
 
         const ServerStatus = () => {
-            const [playerCount, setPlayerCount] = useState(null);
+            const [status, setStatus] = useState({ online: 0, time: null });
             const [history, setHistory] = useState([]);
-            const [isRealData, setIsRealData] = useState(false);
             const [isLoading, setIsLoading] = useState(true);
-            const [timeRange, setTimeRange] = useState('1h');
+            const [timeRange, setTimeRange] = useState('1h'); // 1h, 5h, 24h
+            // Initialize with correct local date string
+            const [selectedDate, setSelectedDate] = useState(() => {
+                const d = new Date();
+                const offset = d.getTimezoneOffset();
+                const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+                return localDate.toISOString().split('T')[0];
+            });
+            const [showHistory, setShowHistory] = useState(false);
+            const [errorMsg, setErrorMsg] = useState(null);
             const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, value: 0, timestamp: null });
             const svgRef = useRef(null);
 
-            // Load history from localStorage
+            // Fetch current status every 30s and save to Firebase
             useEffect(() => {
-                const saved = localStorage.getItem('gt_player_history');
-                if (saved) {
+                const fetchAndSave = async () => {
+                    setIsLoading(true);
                     try {
-                        const parsed = JSON.parse(saved);
-                        const fiveHoursAgo = Date.now() - (5 * 60 * 60 * 1000);
-                        const filtered = parsed.filter(item => item.timestamp > fiveHoursAgo);
-                        setHistory(filtered);
-                    } catch (e) {
-                        console.error('Failed to load history:', e);
-                    }
-                }
-            }, []);
+                        // Using a simple CORS proxy or direct if allowed. 
+                        // Since we need to avoid 403, best rely on a robust external API or the methods used before.
+                        // For this implementation, I will reuse the multi-method approach but optimized.
 
-            // Fetch status with client-side proxies
-            const fetchStatus = async () => {
-                setIsLoading(true);
-                
-                // Multiple methods to try (client-side)
-                const methods = [
-                    // Method 1: Via our Vercel API
-                    async () => {
-                        const response = await fetch('https://gt-tool-seven.vercel.app/api/gt-status');
-                        if (!response.ok) throw new Error('Vercel API failed');
-                        const result = await response.json();
-                        if (result.success && result.data && result.data.online_user) {
-                            return { value: parseInt(result.data.online_user), source: 'Vercel API' };
-                        }
-                        throw new Error('Invalid data from Vercel');
-                    },
-                    
-                    // Method 2: Direct client-side via AllOrigins
-                    async () => {
-                        const response = await fetch(
-                            'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://growtopiagame.com/detail')
-                        );
-                        if (!response.ok) throw new Error('AllOrigins failed');
-                        const data = await response.json();
-                        if (data && data.online_user) {
-                            return { value: parseInt(data.online_user), source: 'AllOrigins (client)' };
-                        }
-                        throw new Error('Invalid AllOrigins data');
-                    },
-                    
-                    // Method 3: Client-side via ThingProxy
-                    async () => {
-                        const response = await fetch(
-                            'https://thingproxy.freeboard.io/fetch/' + encodeURIComponent('https://growtopiagame.com/detail')
-                        );
-                        if (!response.ok) throw new Error('ThingProxy failed');
-                        const data = await response.json();
-                        if (data && data.online_user) {
-                            return { value: parseInt(data.online_user), source: 'ThingProxy (client)' };
-                        }
-                        throw new Error('Invalid ThingProxy data');
-                    },
-                    
-                    // Method 4: AllOrigins Get endpoint
-                    async () => {
-                        const response = await fetch(
-                            'https://api.allorigins.win/get?url=' + encodeURIComponent('https://growtopiagame.com/detail')
-                        );
-                        if (!response.ok) throw new Error('AllOrigins Get failed');
-                        const result = await response.json();
-                        if (result.contents) {
-                            const data = JSON.parse(result.contents);
-                            if (data && data.online_user) {
-                                return { value: parseInt(data.online_user), source: 'AllOrigins Get (client)' };
+                        // Simulate fetch for demo if API fails, but try to be real
+                        let playerCount = 0;
+                        let success = false;
+
+                        const strategies = [
+                            async () => {
+                                const r = await fetch('https://gt-tool-seven.vercel.app/api/gt-status');
+                                const d = await r.json();
+                                if (d.success && d.data.online_user) return parseInt(d.data.online_user);
+                                throw new Error('Vercel API Fail');
+                            },
+                            async () => {
+                                // Fallback logic
+                                const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://growtopiagame.com/detail'));
+                                const d = await r.json();
+                                if (d.online_user) return parseInt(d.online_user);
+                                throw new Error('Fallback Fail');
                             }
-                        }
-                        throw new Error('Invalid AllOrigins Get data');
-                    }
-                ];
-                
-                // Try each method
-                for (let i = 0; i < methods.length; i++) {
-                    try {
-                        console.log(`Trying method ${i + 1}...`);
-                        const result = await methods[i]();
-                        
-                        console.log(`✅ Success with ${result.source}: ${result.value} players`);
-                        setPlayerCount(result.value);
-                        setIsRealData(true);
-                        
-                        // Save to history
-                        const newEntry = { value: result.value, timestamp: Date.now() };
-                        setHistory(prev => {
-                            const updated = [...prev, newEntry];
-                            const fiveHoursAgo = Date.now() - (5 * 60 * 60 * 1000);
-                            const filtered = updated.filter(item => item.timestamp > fiveHoursAgo);
-                            
+                        ];
+
+                        for (let strategy of strategies) {
                             try {
-                                localStorage.setItem('gt_player_history', JSON.stringify(filtered));
-                            } catch (e) {
-                                console.error('Failed to save history:', e);
-                            }
-                            
-                            return filtered;
-                        });
-                        setIsLoading(false);
-                        return; // Exit on success
-                        
-                    } catch (error) {
-                        console.error(`Method ${i + 1} failed:`, error.message);
-                        // Continue to next method
-                    }
-                }
-                
-                // All methods failed
-                console.error('All fetch methods failed');
-                setIsRealData(false);
-                setPlayerCount(null);
-                setIsLoading(false);
-            };
+                                playerCount = await strategy();
+                                success = true;
+                                break;
+                            } catch (e) { console.log("Strategy failed", e); }
+                        }
 
-            useEffect(() => {
-                fetchStatus();
-                const interval = setInterval(fetchStatus, 15000);
+                        if (success) {
+                            setStatus({ online: playerCount, time: Date.now() });
+
+                            // Save to Firestore 'server_status_history'
+                            // We use a daily document for efficiency? Or list of docs?
+                            // Let's use simple collection for now: 'server_pings'
+                            // To avoid spamming DB too hard, maybe check last ping time? 
+                            // But User wanted "save to database".
+                            await db.collection("server_pings").add({
+                                online: playerCount,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } else {
+                            // If completely failed, maybe don't record 0
+                        }
+                    } catch (e) {
+                        console.error("Status check failed", e);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+
+                fetchAndSave();
+                const interval = setInterval(fetchAndSave, 30000); // 30 seconds
                 return () => clearInterval(interval);
             }, []);
 
-            // Filter history by time range
-            const getFilteredHistory = () => {
-                if (history.length === 0) return [];
-                
-                const now = Date.now();
-                const ranges = { '1h': 60 * 60 * 1000, '3h': 3 * 60 * 60 * 1000, '5h': 5 * 60 * 60 * 1000 };
-                const cutoff = now - ranges[timeRange];
-                
-                return history.filter(item => item.timestamp >= cutoff);
-            };
+            // Subscribe to Firestore for History Graph
+            // Subscribe to Firestore for History Graph
+            useEffect(() => {
+                let start = new Date();
+                let end = new Date();
+                let isDaily = timeRange === 'daily';
 
-            const filteredHistory = getFilteredHistory();
-            const hasData = filteredHistory.length > 0;
+                if (isDaily) {
+                    // Create date from YYYY-MM-DD string, treating it as local midnight
+                    const [y, m, d] = selectedDate.split('-').map(Number);
+                    start = new Date(y, m - 1, d, 0, 0, 0, 0);
+                    end = new Date(y, m - 1, d, 23, 59, 59, 999);
+                } else {
+                    let startTimestamp = Date.now();
+                    if (timeRange === '1h') startTimestamp -= 3600 * 1000;
+                    else if (timeRange === '5h') startTimestamp -= 5 * 3600 * 1000;
+                    else if (timeRange === '24h') startTimestamp -= 24 * 3600 * 1000;
+                    start = new Date(startTimestamp);
+                    end = new Date(); // Now
+                }
 
-            // Calculate stats
-            const values = filteredHistory.map(h => h.value);
-            const avgPlayers = hasData ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0;
-            const peakPlayers = hasData ? Math.max(...values) : 0;
-            const peakEntry = hasData ? filteredHistory.find(h => h.value === peakPlayers) : null;
+                console.log(`Querying: ${isDaily ? 'Daily' : timeRange}`, { start: start.toLocaleString(), end: end.toLocaleString() });
 
-            // Format time
-            const formatTime = (ts) => {
-                const d = new Date(ts);
-                return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-            };
+                let query = db.collection("server_pings")
+                    .where("timestamp", ">=", start);
 
-            const formatDate = (ts) => {
-                const d = new Date(ts);
-                return `${d.getDate()} ${d.toLocaleString('en', { month: 'short' })}`;
-            };
+                if (isDaily) {
+                    query = query.where("timestamp", "<=", end);
+                }
 
-            // Chart data
-            const maxVal = hasData ? Math.max(...values, 60000) : 60000;
-            const minVal = hasData ? Math.min(...values, 40000) : 40000;
-            const range = maxVal - minVal || 1;
+                const unsubscribe = query.orderBy("timestamp", "asc")
+                    .onSnapshot(snapshot => {
+                        const data = snapshot.docs.map(doc => {
+                            const d = doc.data();
+                            return {
+                                value: d.online,
+                                timestamp: d.timestamp ? d.timestamp.toDate().getTime() : Date.now()
+                            };
+                        });
+                        console.log("Fetched data points:", data.length);
+                        setHistory(data);
+                        setErrorMsg(null); // Clear error on success
+                    }, err => {
+                        console.error("History fetch error", err);
+                        if (err.code === 'failed-precondition') {
+                            setErrorMsg(<span>Index Missing: <a href="https://console.firebase.google.com" target="_blank" className="underline font-bold">Buka Firebase Console</a> (tab Indexes) atau cek Console browser.</span>);
+                        } else if (err.code === 'permission-denied') {
+                            setErrorMsg(<span>Permission Denied: <a href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore/rules`} target="_blank" className="underline font-bold">Klik di sini untuk buka Tab Rules</a> dan ubah jadi "allow read, write: if true;"</span>);
+                        } else {
+                            setErrorMsg(`Error: ${err.message}`);
+                        }
+                    });
 
-            const points = filteredHistory.map((item, i) => ({
-                x: (i / (filteredHistory.length - 1 || 1)) * 100,
-                y: 100 - ((item.value - minVal) / range) * 100,
-                value: item.value,
-                timestamp: item.timestamp
+                return () => unsubscribe();
+            }, [timeRange, selectedDate]); // Trigger on range change
+
+            // Stats
+            const lowest = history.length > 0 ? Math.min(...history.map(h => h.value)) : 0;
+            const peak = history.length > 0 ? Math.max(...history.map(h => h.value)) : 0;
+            const current = status.online;
+
+            // Chart Helpers (Same as before but adapted)
+            const minVal = history.length ? Math.min(...history.map(h => h.value)) * 0.95 : 0;
+            const maxVal = history.length ? Math.max(...history.map(h => h.value)) * 1.05 : 100;
+            const valRange = maxVal - minVal || 1;
+
+            const points = history.map((h, i) => ({
+                x: (i / (history.length - 1 || 1)) * 100,
+                y: 100 - ((h.value - minVal) / valRange) * 100,
+                value: h.value,
+                timestamp: h.timestamp
             }));
 
-            // Simple line path (no curve for stability)
-            const linePath = points.length > 0
-                ? `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}`
-                : 'M 0,50 L 100,50';
-
-            const areaPath = points.length > 0
-                ? `M ${points[0].x},100 L ${points.map(p => `${p.x},${p.y}`).join(' L ')} L ${points[points.length - 1].x},100 Z`
-                : 'M 0,100 L 0,50 L 100,50 L 100,100 Z';
+            const linePath = points.length > 0 ? `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}` : '';
+            const areaPath = points.length > 0 ? `M ${points[0].x},100 L ${points.map(p => `${p.x},${p.y}`).join(' L ')} L ${points[points.length - 1].x},100 Z` : '';
 
             // Mouse handlers
             const handleMouseMove = (e) => {
@@ -589,211 +1119,149 @@
                 const idx = Math.round((percentX / 100) * (points.length - 1));
                 const clampedIdx = Math.max(0, Math.min(points.length - 1, idx));
                 const point = points[clampedIdx];
-                
-                setTooltip({
-                    show: true,
-                    x: (point.x / 100) * rect.width,
-                    y: (point.y / 100) * rect.height,
-                    value: point.value,
-                    timestamp: point.timestamp
-                });
+                setTooltip({ show: true, x: (point.x / 100) * rect.width, y: (point.y / 100) * rect.height, value: point.value, timestamp: point.timestamp });
             };
 
-            const handleMouseLeave = () => {
-                setTooltip({ ...tooltip, show: false });
-            };
+            const pastDays = useMemo(() => {
+                const days = [];
+                for (let i = 0; i < 14; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    // Handle local date string manually to avoid timezone issues: YYYY-MM-DD
+                    const offset = d.getTimezoneOffset();
+                    const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+                    days.push(localDate.toISOString().split('T')[0]);
+                }
+                return days;
+            }, []);
 
             return (
                 <div className="glass-panel rounded-2xl p-6 mb-6 animate-fade-in relative overflow-hidden">
+                    {/* Bkg Effects */}
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-10 ${isRealData ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                        <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full blur-3xl opacity-10 bg-blue-500"></div>
+                        <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-10 ${current > 0 ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
                     </div>
-                    
+
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
-                                <div className="relative">
-                                    <span className="relative flex h-4 w-4">
-                                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isRealData ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
-                                        <span className={`relative inline-flex rounded-full h-4 w-4 ${isRealData ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
-                                    </span>
-                                </div>
+                                <span className={`flex h-3 w-3 rounded-full ${isLoading ? 'bg-yellow-500 animate-pulse' : current > 0 ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
                                 <div>
                                     <h2 className="text-lg font-bold text-theme-highlight">Server Status</h2>
-                                    <p className="text-[10px] text-theme-muted">Updated every 15 seconds</p>
+                                    <p className="text-[10px] text-theme-muted">Updated every 30s • Firestore History</p>
                                 </div>
                             </div>
-                            
-                            <div className="flex gap-2">
-                                {isLoading ? (
-                                    <span className="text-[10px] bg-slate-700 text-slate-300 px-3 py-1 rounded-full flex items-center gap-1">
-                                        <div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></div>
-                                        Checking...
-                                    </span>
-                                ) : isRealData ? (
-                                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                                        <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
-                                        LIVE DATA
-                                    </span>
-                                ) : (
-                                    <span className="text-[10px] bg-red-500/20 text-red-400 px-3 py-1 rounded-full border border-red-500/30 flex items-center gap-1">
-                                        <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-                                        FAILED
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                            <div className="flex bg-black/20 rounded-lg p-1 items-center gap-2 relative">
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowHistory(!showHistory)}
+                                        className={`px-3 py-1 text-xs rounded-md transition-all flex items-center gap-1 ${timeRange === 'daily' ? 'bg-blue-600 text-white' : 'text-theme-muted hover:text-white'}`}
+                                    >
+                                        <Icons.Calendar size={12} />
+                                        {timeRange === 'daily' ? new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : 'History'}
+                                    </button>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <div className="glass-panel p-4 rounded-xl">
-                                <div className="text-xs text-theme-muted mb-1">Players Online</div>
-                                {playerCount !== null && isRealData ? (
-                                    <>
-                                        <div className="text-3xl font-black text-theme-highlight font-mono">
-                                            {new Intl.NumberFormat('en-US').format(playerCount)}
+                                    {showHistory && (
+                                        <div className="absolute top-full right-0 mt-2 w-40 glass-panel border border-white/10 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto animate-fade-in flex flex-col p-1 bg-[#1e293b]">
+                                            {pastDays.map(date => {
+                                                const d = new Date(date);
+                                                const label = d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+                                                const isToday = date === new Date().toISOString().split('T')[0];
+
+                                                return (
+                                                    <button
+                                                        key={date}
+                                                        onClick={() => {
+                                                            setSelectedDate(date);
+                                                            setTimeRange('daily');
+                                                            setShowHistory(false);
+                                                        }}
+                                                        className={`text-xs text-left px-3 py-2 rounded-lg transition-colors ${selectedDate === date && timeRange === 'daily' ? 'bg-blue-600 text-white' : 'text-theme-muted hover:bg-white/5 hover:text-white'} ${isToday ? 'font-bold' : ''}`}
+                                                    >
+                                                        {isToday ? 'Hari Ini' : label}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
-                                        <div className="text-[10px] text-theme-muted mt-1">Current</div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="text-2xl font-bold text-red-400">Connection Failed</div>
-                                        <div className="text-[10px] text-theme-muted mt-1">Unable to fetch</div>
-                                    </>
-                                )}
-                            </div>
+                                    )}
+                                </div>
 
-                            <div className="glass-panel p-4 rounded-xl">
-                                <div className="text-xs text-theme-muted mb-1">Average ({timeRange})</div>
-                                <div className="text-3xl font-black text-theme-highlight font-mono">
-                                    {avgPlayers > 0 ? new Intl.NumberFormat('en-US').format(avgPlayers) : '—'}
-                                </div>
-                                <div className="text-[10px] text-theme-muted mt-1">{filteredHistory.length} points</div>
-                            </div>
-
-                            <div className="glass-panel p-4 rounded-xl">
-                                <div className="text-xs text-theme-muted mb-1">Peak ({timeRange})</div>
-                                <div className="text-3xl font-black text-theme-highlight font-mono">
-                                    {peakPlayers > 0 ? new Intl.NumberFormat('en-US').format(peakPlayers) : '—'}
-                                </div>
-                                <div className="text-[10px] text-theme-muted mt-1">
-                                    {peakEntry ? `at ${formatTime(peakEntry.timestamp)}` : 'No data'}
-                                </div>
+                                {['1h', '5h', '24h'].map(r => (
+                                    <button key={r} onClick={() => { setTimeRange(r); setShowHistory(false); }} className={`px-3 py-1 text-xs rounded-md transition-all ${timeRange === r ? 'bg-blue-600 text-white' : 'text-theme-muted hover:text-white'} capitalize`}>
+                                        {r}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
-                        <div className="flex gap-2 mb-4 justify-center">
-                            {['1h', '3h', '5h'].map(range => (
-                                <button
-                                    key={range}
-                                    onClick={() => setTimeRange(range)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                                        timeRange === range
-                                            ? 'bg-blue-500 text-white shadow-lg'
-                                            : 'glass-panel text-theme-muted hover:text-theme-highlight'
-                                    }`}
-                                >
-                                    {range === '1h' ? '1 Hour' : range === '3h' ? '3 Hours' : '5 Hours'}
-                                </button>
-                            ))}
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            {errorMsg && (
+                                <div className="col-span-3 bg-red-500/20 border border-red-500/50 p-2 rounded-lg text-xs text-red-200 text-center animate-pulse">
+                                    ⚠️ {errorMsg}
+                                </div>
+                            )}
+                            <div className="glass-panel p-4 rounded-xl text-center">
+                                <div className="text-xs text-theme-muted">Players Online</div>
+                                <div className="text-2xl font-black text-theme-highlight font-mono">{isLoading && !current ? "..." : current.toLocaleString()}</div>
+                            </div>
+                            <div className="glass-panel p-4 rounded-xl text-center">
+                                <div className="text-xs text-theme-muted">Lowest ({timeRange})</div>
+                                <div className="text-2xl font-black text-red-400 font-mono">{lowest.toLocaleString()}</div>
+                            </div>
+                            <div className="glass-panel p-4 rounded-xl text-center">
+                                <div className="text-xs text-theme-muted">Peak ({timeRange})</div>
+                                <div className="text-2xl font-black text-emerald-400 font-mono">{peak.toLocaleString()}</div>
+                            </div>
                         </div>
 
-                        <div className="glass-panel p-6 rounded-xl">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-sm font-bold text-theme-highlight">Player Activity</h3>
-                                <div className="text-[10px] text-theme-muted">Last {timeRange === '1h' ? '1 hour' : timeRange === '3h' ? '3 hours' : '5 hours'}</div>
-                            </div>
-                            
-                            <div className="h-32 relative">
-                                <svg 
-                                    ref={svgRef}
-                                    className="w-full h-full overflow-visible cursor-crosshair" 
-                                    viewBox="0 0 100 100" 
-                                    preserveAspectRatio="none"
-                                    onMouseMove={handleMouseMove}
-                                    onMouseLeave={handleMouseLeave}
-                                >
-                                    <defs>
-                                        <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                            <stop offset="0%" style={{stopColor: isRealData ? '#10b981' : '#ef4444', stopOpacity: 0.4}} />
-                                            <stop offset="100%" style={{stopColor: isRealData ? '#10b981' : '#ef4444', stopOpacity: 0.05}} />
-                                        </linearGradient>
-                                    </defs>
-                                    
-                                    <line x1="0" y1="25" x2="100" y2="25" stroke="currentColor" strokeWidth="0.3" className="text-theme-muted opacity-20" vectorEffect="non-scaling-stroke" />
-                                    <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" strokeWidth="0.3" className="text-theme-muted opacity-20" vectorEffect="non-scaling-stroke" />
-                                    <line x1="0" y1="75" x2="100" y2="75" stroke="currentColor" strokeWidth="0.3" className="text-theme-muted opacity-20" vectorEffect="non-scaling-stroke" />
-                                    
-                                    <path d={areaPath} fill="url(#chartGradient)" />
-                                    
-                                    <path 
-                                        d={linePath} 
-                                        fill="none" 
-                                        stroke="currentColor" 
-                                        strokeWidth="2.5" 
-                                        className={isRealData ? "text-emerald-500" : "text-red-500"}
-                                        vectorEffect="non-scaling-stroke"
-                                    />
-                                    
-                                    {tooltip.show && points.length > 0 && (
-                                        <line
-                                            x1={tooltip.x / svgRef.current.getBoundingClientRect().width * 100}
-                                            y1="0"
-                                            x2={tooltip.x / svgRef.current.getBoundingClientRect().width * 100}
-                                            y2="100"
-                                            stroke="currentColor"
-                                            strokeWidth="1"
-                                            className={isRealData ? "text-emerald-400" : "text-red-400"}
-                                            opacity="0.3"
-                                            strokeDasharray="2,2"
-                                            vectorEffect="non-scaling-stroke"
+                        {/* GRAPH */}
+                        <div className="glass-panel p-4 rounded-xl h-48 relative flex items-center justify-center">
+                            {history.length < 1 ? (
+                                <div className="text-center">
+                                    <div className="text-theme-muted text-sm mb-2">Belum ada data history</div>
+                                    <div className="text-[10px] text-theme-muted opacity-50">Pastikan status server berjalan minimal 30 detik</div>
+                                </div>
+                            ) : (
+                                <>
+                                    <svg
+                                        ref={svgRef}
+                                        className="w-full h-full overflow-visible cursor-crosshair"
+                                        viewBox="0 0 100 100"
+                                        preserveAspectRatio="none"
+                                        onMouseMove={handleMouseMove}
+                                        onMouseLeave={() => setTooltip({ ...tooltip, show: false })}
+                                    >
+                                        <defs>
+                                            <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" style={{ stopColor: '#10b981', stopOpacity: 0.4 }} />
+                                                <stop offset="100%" style={{ stopColor: '#10b981', stopOpacity: 0.05 }} />
+                                            </linearGradient>
+                                        </defs>
+                                        <path d={areaPath} fill="url(#chartGradient)" />
+                                        <path d={linePath} fill="none" stroke="#10b981" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+
+                                        {tooltip.show && (
+                                            <line x1={tooltip.x / svgRef.current.getBoundingClientRect().width * 100} y1="0" x2={tooltip.x / svgRef.current.getBoundingClientRect().width * 100} y2="100" stroke="white" strokeWidth="1" strokeDasharray="3,3" vectorEffect="non-scaling-stroke" opacity="0.5" />
+                                        )}
+                                    </svg>
+                                    {tooltip.show && (
+                                        <div
+                                            className="absolute z-10 w-3 h-3 bg-white rounded-full pointer-events-none shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                                            style={{
+                                                left: tooltip.x,
+                                                top: tooltip.y,
+                                                transform: 'translate(-50%, -50%)'
+                                            }}
                                         />
                                     )}
-                                </svg>
-                                
-                                {tooltip.show && tooltip.timestamp && (
-                                    <>
-                                        <div 
-                                            className="absolute pointer-events-none"
-                                            style={{ left: `${tooltip.x}px`, top: `${tooltip.y}px`, transform: 'translate(-50%, -50%)' }}
-                                        >
-                                            <div className={`w-3 h-3 rounded-full border-2 border-white shadow-lg ${isRealData ? 'bg-emerald-400' : 'bg-red-400'}`}></div>
-                                        </div>
-                                        
-                                        <div 
-                                            className="absolute pointer-events-none z-50"
-                                            style={{ left: `${tooltip.x}px`, top: `${tooltip.y - 50}px`, transform: 'translateX(-50%)' }}
-                                        >
-                                            <div className="glass-panel px-4 py-2 rounded-lg shadow-xl border-2 border-white/30">
-                                                <div className="text-sm font-black text-theme-highlight whitespace-nowrap">
-                                                    {new Intl.NumberFormat('en-US').format(tooltip.value)}
-                                                </div>
-                                                <div className="text-[10px] text-theme-muted">
-                                                    {formatTime(tooltip.timestamp)} • {formatDate(tooltip.timestamp)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                                
-                                <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-[9px] text-theme-muted font-mono -ml-12 pointer-events-none">
-                                    <span>{new Intl.NumberFormat('en-US', { notation: 'compact' }).format(maxVal)}</span>
-                                    <span>{new Intl.NumberFormat('en-US', { notation: 'compact' }).format((maxVal + minVal) / 2)}</span>
-                                    <span>{new Intl.NumberFormat('en-US', { notation: 'compact' }).format(minVal)}</span>
+                                </>
+                            )}
+                            {tooltip.show && history.length > 0 && (
+                                <div className="absolute z-20 pointer-events-none bg-slate-900 border border-slate-700 p-2 rounded shadow-xl text-xs" style={{ top: tooltip.y - 40, left: tooltip.x, transform: 'translateX(-50%)' }}>
+                                    <div className="font-bold text-white">{tooltip.value.toLocaleString()}</div>
+                                    <div className="text-slate-400">{new Date(tooltip.timestamp).toLocaleTimeString()}</div>
                                 </div>
-                            </div>
-                            
-                            <div className="flex justify-between text-[10px] text-theme-muted mt-2 font-mono">
-                                <span>{hasData ? formatTime(filteredHistory[0].timestamp) : '—'}</span>
-                                <span>{hasData && filteredHistory.length > 1 ? formatTime(filteredHistory[Math.floor(filteredHistory.length / 2)].timestamp) : '—'}</span>
-                                <span>Now</span>
-                            </div>
-                        </div>
-
-                        <div className="mt-4 text-xs text-theme-muted text-center">
-                            {isRealData 
-                                ? `✅ Real-time data • Tracking ${filteredHistory.length} data points` 
-                                : "❌ Connection failed - Unable to fetch data"}
+                            )}
                         </div>
                     </div>
                 </div>
@@ -812,17 +1280,16 @@
                         {BBM_ITEMS.map((item, idx) => (
                             <div key={idx} className="glass-panel p-4 rounded-xl flex items-start gap-4 hover:bg-white/5 transition-colors border border-white/5 group">
                                 <div className="w-12 h-12 rounded-lg bg-black/10 flex items-center justify-center shrink-0 border border-white/10 group-hover:border-orange-500/50 transition-colors">
-                                    <Icons.Cube size={24} className="text-orange-400"/>
+                                    <Icons.Cube size={24} className="text-orange-400" />
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <h3 className="font-bold text-theme-highlight text-sm">{item.name}</h3>
-                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border ${
-                                            item.rarity === 'Exclusive' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' :
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border ${item.rarity === 'Exclusive' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' :
                                             item.rarity === 'Rare' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
-                                            item.rarity === 'Uncommon' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
-                                            'bg-slate-500/10 text-slate-400 border-slate-500/30'
-                                        }`}>{item.rarity}</span>
+                                                item.rarity === 'Uncommon' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
+                                                    'bg-slate-500/10 text-slate-400 border-slate-500/30'
+                                            }`}>{item.rarity}</span>
                                     </div>
                                     <p className="text-xs text-theme-muted leading-relaxed">{item.desc}</p>
                                 </div>
@@ -842,20 +1309,27 @@
             const [targetLevel, setTargetLevel] = useState(10);
             const [activeItems, setActiveItems] = useState({});
 
+            const presetHook = usePresets("xp_presets", { currLevel, currXp, targetLevel, activeItems }, (data) => {
+                setCurrLevel(data.currLevel);
+                setCurrXp(data.currXp);
+                setTargetLevel(data.targetLevel);
+                setActiveItems(data.activeItems || {});
+            });
+
             const toggleItem = (id) => {
-                setActiveItems(prev => ({...prev, [id]: !prev[id]}));
+                setActiveItems(prev => ({ ...prev, [id]: !prev[id] }));
             };
 
             const stats = useMemo(() => {
                 let totalXpNeeded = 0;
                 let breakdown = [];
-                
+
                 for (let lvl = currLevel + 1; lvl <= targetLevel; lvl++) {
                     const req = 50 * (Math.pow(lvl, 2) + 2);
                     totalXpNeeded += req;
                     breakdown.push({ level: lvl, req: req });
                 }
-                
+
                 const finalXpNeeded = Math.max(0, totalXpNeeded - currXp);
 
                 let base = 20;
@@ -880,37 +1354,38 @@
             return (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
                     <div className="lg:col-span-4 space-y-4">
+                        <PresetManager hook={presetHook} />
                         <div className="glass-panel p-5 rounded-2xl space-y-4">
                             <h3 className="text-lg font-bold text-theme-highlight flex items-center gap-2">
-                                <Icons.User size={20} className="text-blue-400"/> Level Settings
+                                <Icons.User size={20} className="text-blue-400" /> Level Settings
                             </h3>
                             <div>
                                 <label className="text-xs font-bold text-theme-muted uppercase mb-1 block">Level Saat Ini (Max 124)</label>
-                                <input type="number" min="0" max="124" value={currLevel} onChange={e => setCurrLevel(Math.min(124, Math.max(0, parseInt(e.target.value)||0)))}
-                                    className="glass-input w-full p-3 rounded-xl font-bold"/>
+                                <input type="number" min="0" max="124" value={currLevel} onChange={e => setCurrLevel(Math.min(124, Math.max(0, parseInt(e.target.value) || 0)))}
+                                    className="glass-input w-full p-3 rounded-xl font-bold" />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-theme-muted uppercase mb-1 block">Target Level (Max 125)</label>
-                                <input type="number" min="1" max="125" value={targetLevel} onChange={e => setTargetLevel(Math.min(125, Math.max(1, parseInt(e.target.value)||1)))}
-                                    className="glass-input w-full p-3 rounded-xl font-bold"/>
+                                <input type="number" min="1" max="125" value={targetLevel} onChange={e => setTargetLevel(Math.min(125, Math.max(1, parseInt(e.target.value) || 1)))}
+                                    className="glass-input w-full p-3 rounded-xl font-bold" />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-theme-muted uppercase mb-1 block">XP Saat Ini</label>
-                                <input type="number" value={currXp} onChange={e => setCurrXp(Math.max(0, parseInt(e.target.value)||0))}
-                                    className="glass-input w-full p-3 rounded-xl font-mono"/>
+                                <input type="number" value={currXp} onChange={e => setCurrXp(Math.max(0, parseInt(e.target.value) || 0))}
+                                    className="glass-input w-full p-3 rounded-xl font-mono" />
                             </div>
                         </div>
 
                         <div className="glass-panel p-5 rounded-2xl">
-                             <h3 className="text-lg font-bold text-theme-highlight mb-4 flex items-center gap-2">
-                                <Icons.Ghost size={20} className="text-purple-400"/> Item Penunjang
+                            <h3 className="text-lg font-bold text-theme-highlight mb-4 flex items-center gap-2">
+                                <Icons.Ghost size={20} className="text-purple-400" /> Item Penunjang
                             </h3>
                             <div className="space-y-3">
                                 {XP_ITEMS.map(item => (
                                     <div key={item.id} className="flex items-center justify-between p-2 rounded-xl border border-white/5 bg-black/5">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-black/10 rounded-lg flex items-center justify-center">
-                                                <img src={item.img} alt={item.name} className="w-8 h-8 object-contain" referrerPolicy="no-referrer"/>
+                                                <img src={item.img} alt={item.name} className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
                                             </div>
                                             <div>
                                                 <div className="text-xs font-bold text-theme-main">{item.name}</div>
@@ -918,10 +1393,10 @@
                                             </div>
                                         </div>
                                         <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                                            <input 
-                                                type="checkbox" 
-                                                name={item.id} 
-                                                id={item.id} 
+                                            <input
+                                                type="checkbox"
+                                                name={item.id}
+                                                id={item.id}
                                                 checked={!!activeItems[item.id]}
                                                 onChange={() => toggleItem(item.id)}
                                                 className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-600 transition-all duration-300"
@@ -935,11 +1410,11 @@
                     </div>
 
                     <div className="lg:col-span-8 space-y-4">
-                         <div className="glass-panel p-6 rounded-2xl relative overflow-hidden text-center border-purple-500/20" style={{background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(15, 23, 42, 0.2))'}}>
+                        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden text-center border-purple-500/20" style={{ background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(15, 23, 42, 0.2))' }}>
                             <div className="relative z-10">
                                 <p className="text-purple-400 font-bold text-xs uppercase tracking-widest mb-2">Total Ghost Jar Dibutuhkan</p>
                                 <h2 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-purple-200 to-purple-500 font-mono">
-                                    {formatNumber(stats.jarsNeeded)} <img src={GHOST_JAR_ICON} className="inline w-10 h-10 -mt-2" referrerPolicy="no-referrer"/>
+                                    {formatNumber(stats.jarsNeeded)} <img src={GHOST_JAR_ICON} className="inline w-10 h-10 -mt-2" referrerPolicy="no-referrer" />
                                 </h2>
                                 <div className="mt-4 flex justify-center gap-8 text-sm">
                                     <div>
@@ -996,35 +1471,48 @@
             const [useRoleDay, setUseRoleDay] = useState(true);
             const [useAllRoleDay, setUseAllRoleDay] = useState(true);
 
+            const presetHook = usePresets("role_presets", { selectedRole, startLevel, currentPoints, targetLevel, dailyQuests, hasCape, useRoleDay, useAllRoleDay }, (data) => {
+                setSelectedRole(data.selectedRole);
+                setStartLevel(data.startLevel);
+                setCurrentPoints(data.currentPoints);
+                setTargetLevel(data.targetLevel);
+                setDailyQuests(data.dailyQuests);
+                setHasCape(data.hasCape);
+                setUseRoleDay(data.useRoleDay);
+                setUseAllRoleDay(data.useAllRoleDay);
+            });
+
+
+
             useEffect(() => {
                 if (ROLES.CRAFTER.includes(selectedRole)) setRoleType("CRAFTER");
                 else setRoleType("SUPPLIER");
                 setCurrentPoints(0);
-                setHasCape(false); 
+                setHasCape(false);
             }, [selectedRole]);
 
             const calculation = useMemo(() => {
                 const data = LEVEL_DATA[roleType];
                 const costs = GEM_COSTS[roleType];
                 const capeBonus = hasCape ? 1.05 : 1.0;
-                
+
                 // Role Day bonus: +25% XP (1x per week)
                 // All Role Day bonus: +25% XP (1x per week)
                 // Total bonus minggu ini: 2x 25% = 50% ekstra XP
-                
+
                 let totalPointsNeeded = 0;
                 let totalQuests = 0;
                 let breakdown = [];
-                
+
                 for (let i = startLevel; i < targetLevel; i++) {
-                    if (i >= 10) break; 
+                    if (i >= 10) break;
                     const levelInfo = data[i];
                     let pointsNeeded = levelInfo.req;
                     if (i === startLevel) pointsNeeded = Math.max(0, levelInfo.req - currentPoints);
-                    
+
                     const effectiveReward = Math.floor(levelInfo.reward * capeBonus);
                     const quests = Math.ceil(pointsNeeded / effectiveReward);
-                    
+
                     totalPointsNeeded += pointsNeeded;
                     totalQuests += quests;
 
@@ -1038,46 +1526,46 @@
                 }
 
                 const totalDays = Math.ceil(totalQuests / dailyQuests);
-                
+
                 // Calculate weeks
                 const totalWeeks = Math.ceil(totalDays / 7);
-                
+
                 // Bonus XP dari Role Days
                 let bonusQuestsFromRoleDay = 0;
                 let bonusQuestsFromAllRoleDay = 0;
-                
+
                 if (useRoleDay) {
                     // Role Day: 1x per week, +25% XP
                     // Bonus = dailyQuests * 0.25 per week
                     bonusQuestsFromRoleDay = totalWeeks * dailyQuests * 0.25;
                 }
-                
+
                 if (useAllRoleDay) {
                     // All Role Day: 1x per week, +25% XP
                     bonusQuestsFromAllRoleDay = totalWeeks * dailyQuests * 0.25;
                 }
-                
+
                 const totalBonusQuests = bonusQuestsFromRoleDay + bonusQuestsFromAllRoleDay;
-                
+
                 // Adjusted total quests needed (karena ada bonus XP)
                 const adjustedTotalQuests = Math.max(0, totalQuests - Math.floor(totalBonusQuests));
                 const adjustedTotalDays = Math.ceil(adjustedTotalQuests / dailyQuests);
-                
+
                 // Calculate gems
                 let totalGems = 0;
-                const costPerFullDay = GEM_COSTS[roleType].slice(0, dailyQuests).reduce((a,b)=>a+b, 0);
+                const costPerFullDay = GEM_COSTS[roleType].slice(0, dailyQuests).reduce((a, b) => a + b, 0);
                 totalGems += Math.floor(adjustedTotalQuests / dailyQuests) * costPerFullDay;
-                
+
                 const remainingQuests = adjustedTotalQuests % dailyQuests;
-                for(let q=0; q < remainingQuests; q++) {
-                    if(q < costs.length) totalGems += costs[q];
+                for (let q = 0; q < remainingQuests; q++) {
+                    if (q < costs.length) totalGems += costs[q];
                 }
 
-                return { 
-                    totalPointsNeeded, 
-                    totalQuests, 
-                    totalDays, 
-                    totalGems, 
+                return {
+                    totalPointsNeeded,
+                    totalQuests,
+                    totalDays,
+                    totalGems,
                     breakdown,
                     bonusQuestsFromRoleDay,
                     bonusQuestsFromAllRoleDay,
@@ -1103,11 +1591,11 @@
                                     </button>
                                 ))}
                             </div>
-                            
+
                             {/* Cape Toggle */}
                             <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/5 mb-3">
                                 <div className="flex items-center gap-2">
-                                    <Icons.Shirt size={18} className={hasCape ? "text-yellow-400" : "text-slate-500"}/>
+                                    <Icons.Shirt size={18} className={hasCape ? "text-yellow-400" : "text-slate-500"} />
                                     <div>
                                         <div className="text-sm font-bold text-theme-main">{roleType === "CRAFTER" ? "Crafter" : "Supplier"} Cape</div>
                                         <div className="text-xs text-theme-muted">+5% Quest Points</div>
@@ -1117,7 +1605,7 @@
                                     <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${hasCape ? 'translate-x-6' : ''}`}></div>
                                 </button>
                             </div>
-                            
+
                             {/* Role Day Toggle */}
                             <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/5 mb-3">
                                 <div className="flex items-center gap-2">
@@ -1131,7 +1619,7 @@
                                     <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${useRoleDay ? 'translate-x-6' : ''}`}></div>
                                 </button>
                             </div>
-                            
+
                             {/* All Role Day Toggle */}
                             <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/5">
                                 <div className="flex items-center gap-2">
@@ -1146,30 +1634,30 @@
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div className="glass-panel p-5 rounded-2xl space-y-6">
                             <div>
                                 <div className="flex justify-between mb-2 text-sm text-theme-muted">
                                     <span>Level Saat Ini: <b className="text-theme-highlight">{startLevel}</b></span>
                                     <span>Target: <b className="text-emerald-500">{targetLevel === 10 ? "MAX" : targetLevel}</b></span>
                                 </div>
-                                <input type="range" min="0" max="9" value={startLevel} className="w-full accent-blue-500 mb-4" onChange={(e) => { const val = parseInt(e.target.value); setStartLevel(val); if(val >= targetLevel) setTargetLevel(val + 1); }}/>
-                                <input type="range" min="1" max="10" value={targetLevel} className="w-full accent-emerald-500" onChange={(e) => { const val = parseInt(e.target.value); setTargetLevel(val); if(val <= startLevel) setStartLevel(val - 1); }}/>
+                                <input type="range" min="0" max="9" value={startLevel} className="w-full accent-blue-500 mb-4" onChange={(e) => { const val = parseInt(e.target.value); setStartLevel(val); if (val >= targetLevel) setTargetLevel(val + 1); }} />
+                                <input type="range" min="1" max="10" value={targetLevel} className="w-full accent-emerald-500" onChange={(e) => { const val = parseInt(e.target.value); setTargetLevel(val); if (val <= startLevel) setStartLevel(val - 1); }} />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-theme-muted uppercase mb-2 block">Poin Saat Ini</label>
-                                <input type="number" value={currentPoints} onChange={(e) => setCurrentPoints(Math.max(0, parseInt(e.target.value)||0))} className="glass-input w-full p-2 rounded-lg font-mono text-sm" placeholder="0"/>
+                                <input type="number" value={currentPoints} onChange={(e) => setCurrentPoints(Math.max(0, parseInt(e.target.value) || 0))} className="glass-input w-full p-2 rounded-lg font-mono text-sm" placeholder="0" />
                             </div>
                             <div>
                                 <div className="flex justify-between mb-2 text-sm">
                                     <span className="text-theme-muted">Quest / Hari</span>
                                     <span className="bg-blue-600 px-2 rounded text-white text-xs py-0.5">{dailyQuests}</span>
                                 </div>
-                                <input type="range" min="1" max="10" value={dailyQuests} onChange={(e) => setDailyQuests(parseInt(e.target.value))} className="w-full accent-purple-500"/>
+                                <input type="range" min="1" max="10" value={dailyQuests} onChange={(e) => setDailyQuests(parseInt(e.target.value))} className="w-full accent-purple-500" />
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="lg:col-span-8 space-y-4">
                         {/* Bonus Info Card */}
                         {(useRoleDay || useAllRoleDay) && (
@@ -1199,9 +1687,9 @@
                                 </div>
                             </div>
                         )}
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="md:col-span-2 glass-panel p-6 rounded-2xl relative overflow-hidden border-yellow-500/20" style={{background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(15, 23, 42, 0.1))'}}>
+                            <div className="md:col-span-2 glass-panel p-6 rounded-2xl relative overflow-hidden border-yellow-500/20" style={{ background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(15, 23, 42, 0.1))' }}>
                                 <div className="relative z-10">
                                     <p className="text-yellow-500 font-bold text-xs uppercase tracking-widest">Estimasi Biaya Gems</p>
                                     <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-400 to-amber-600 font-mono mt-1">{formatNumber(calculation.totalGems)} 💎</h2>
@@ -1227,7 +1715,7 @@
                                 <span className="text-theme-muted text-xs">Untuk mencapai target</span>
                             </div>
                         </div>
-                        
+
                         <div className="glass-panel rounded-2xl overflow-hidden h-[400px] flex flex-col">
                             <div className="p-4 border-b border-white/10 bg-black/5 font-bold text-theme-muted text-sm">Quest Roadmap</div>
                             <div className="overflow-auto flex-1 p-2">
@@ -1238,7 +1726,7 @@
                                     <tbody className="text-theme-main">
                                         {calculation.breakdown.map((row) => (
                                             <tr key={row.level} className="border-b border-white/5 hover:bg-white/5">
-                                                <td className="px-4 py-3 font-mono">{row.level} → {row.level+1}</td>
+                                                <td className="px-4 py-3 font-mono">{row.level} → {row.level + 1}</td>
                                                 <td className="px-4 py-3 text-right font-mono">{formatNumber(row.points)}</td>
                                                 <td className="px-4 py-3 text-right font-mono text-emerald-500">+{formatNumber(row.effReward)} {hasCape && <span className="text-xs text-yellow-500">⚡</span>}</td>
                                                 <td className="px-4 py-3 text-right font-bold text-theme-highlight">{formatNumber(row.quests)}</td>
@@ -1253,18 +1741,24 @@
             );
         };
 
-        const ShopCalculator = ({ title, icon: IconComponent, items, defaultPrice }) => {
+        const ShopCalculator = ({ title, icon: IconComponent, items, defaultPrice, presetId }) => {
             const [packCount, setPackCount] = useState(1);
-            const [packPrice, setPackPrice] = useState(defaultPrice); 
-            const [rates, setRates] = useState({}); 
+            const [packPrice, setPackPrice] = useState(defaultPrice);
+            const [rates, setRates] = useState({});
+
+            const presetHook = usePresets(presetId, { packCount, packPrice, rates }, (data) => {
+                setPackCount(data.packCount);
+                setPackPrice(data.packPrice);
+                setRates(data.rates || {});
+            });
 
             const handleRateChange = (id, val) => {
-                setRates(prev => ({...prev, [id]: parseFloat(val) || 0}));
+                setRates(prev => ({ ...prev, [id]: parseFloat(val) || 0 }));
             };
 
             const stats = useMemo(() => {
                 let totalRevenue = 0;
-                
+
                 const itemsCalculated = items.map(item => {
                     const totalQty = item.qty * packCount;
                     const rate = rates[item.id] || 0;
@@ -1295,43 +1789,44 @@
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
                     {/* LEFT: SETTINGS */}
                     <div className="lg:col-span-4 space-y-4">
+                        <PresetManager hook={presetHook} />
                         <div className="glass-panel p-5 rounded-2xl">
                             <h3 className="text-lg font-bold text-theme-highlight mb-4 flex items-center gap-2">
-                                <IconComponent size={20} className="text-emerald-500"/> Settings Pack
+                                <IconComponent size={20} className="text-emerald-500" /> Settings Pack
                             </h3>
                             <div className="space-y-4">
                                 <div>
                                     <label className="text-xs font-bold text-theme-muted uppercase mb-1 block">Jumlah Pack</label>
-                                    <input type="number" value={packCount} onChange={e => setPackCount(Math.max(1, parseInt(e.target.value)||1))}
-                                        className="glass-input w-full p-3 rounded-xl font-bold text-lg"/>
+                                    <input type="number" value={packCount} onChange={e => setPackCount(Math.max(1, parseInt(e.target.value) || 1))}
+                                        className="glass-input w-full p-3 rounded-xl font-bold text-lg" />
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-theme-muted uppercase mb-1 block">Harga Beli Per Pack (WL)</label>
                                     <div className="relative">
-                                        <input type="number" value={packPrice} onChange={e => setPackPrice(parseFloat(e.target.value)||0)}
-                                            className="glass-input w-full p-3 rounded-xl font-bold pl-10"/>
-                                        <img src={WL_ICON} className="absolute left-3 top-3 w-5 h-5" referrerPolicy="no-referrer"/>
+                                        <input type="number" value={packPrice} onChange={e => setPackPrice(parseFloat(e.target.value) || 0)}
+                                            className="glass-input w-full p-3 rounded-xl font-bold pl-10" />
+                                        <img src={WL_ICON} className="absolute left-3 top-3 w-5 h-5" referrerPolicy="no-referrer" />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="glass-panel p-5 rounded-2xl" style={{background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(15, 23, 42, 0.1))'}}>
+                        <div className="glass-panel p-5 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(15, 23, 42, 0.1))' }}>
                             <h3 className="text-theme-muted text-xs font-bold uppercase mb-4">Estimasi Profit</h3>
                             <div className="space-y-3">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-theme-muted">Total Modal</span>
-                                    <span className="font-mono text-red-400">-{formatWL(stats.totalCost)} <img src={WL_ICON} className="inline w-3 h-3" referrerPolicy="no-referrer"/></span>
+                                    <span className="font-mono text-red-400">-{formatWL(stats.totalCost)} <img src={WL_ICON} className="inline w-3 h-3" referrerPolicy="no-referrer" /></span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-theme-muted">Total Penjualan</span>
-                                    <span className="font-mono text-emerald-500">+{formatWL(stats.totalRevenue)} <img src={WL_ICON} className="inline w-3 h-3" referrerPolicy="no-referrer"/></span>
+                                    <span className="font-mono text-emerald-500">+{formatWL(stats.totalRevenue)} <img src={WL_ICON} className="inline w-3 h-3" referrerPolicy="no-referrer" /></span>
                                 </div>
                                 <div className="h-px bg-white/10 my-2"></div>
                                 <div className="flex justify-between items-center">
                                     <span className="font-bold text-theme-highlight">Net Profit</span>
                                     <span className={`text-2xl font-black font-mono ${stats.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                        {stats.profit > 0 ? '+' : ''}{formatWL(stats.profit)} <img src={WL_ICON} className="inline w-5 h-5" referrerPolicy="no-referrer"/>
+                                        {stats.profit > 0 ? '+' : ''}{formatWL(stats.profit)} <img src={WL_ICON} className="inline w-5 h-5" referrerPolicy="no-referrer" />
                                     </span>
                                 </div>
                             </div>
@@ -1351,7 +1846,7 @@
                                     <div key={item.id} className="grid grid-cols-12 items-center p-3 rounded-xl hover:bg-white/5 transition-colors border border-white/5 bg-black/5">
                                         <div className="col-span-5 flex items-center gap-3">
                                             <div className="w-10 h-10 bg-black/10 rounded-lg flex items-center justify-center border border-white/10">
-                                                <img src={item.img} alt={item.name} className="w-8 h-8 object-contain" referrerPolicy="no-referrer"/>
+                                                <img src={item.img} alt={item.name} className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
                                             </div>
                                             <div>
                                                 <div className="text-sm font-bold text-theme-main">{item.name}</div>
@@ -1363,8 +1858,8 @@
                                                 {item.priceType === 'special_200' ? (
                                                     <div className="flex items-center gap-2 justify-center">
                                                         <span className="text-xs text-theme-muted whitespace-nowrap">200 /</span>
-                                                        <input 
-                                                            type="number" 
+                                                        <input
+                                                            type="number"
                                                             placeholder="WL"
                                                             onChange={(e) => handleRateChange(item.id, e.target.value)}
                                                             className="glass-input w-20 p-1.5 text-center text-sm rounded-lg text-emerald-500 placeholder-slate-500 focus:outline-none"
@@ -1373,8 +1868,8 @@
                                                 ) : item.priceType === 'surg_e' ? (
                                                     <div className="flex items-center gap-2 justify-center">
                                                         <span className="text-xs text-theme-muted whitespace-nowrap">1 /</span>
-                                                        <input 
-                                                            type="number" 
+                                                        <input
+                                                            type="number"
                                                             placeholder="WL"
                                                             onChange={(e) => handleRateChange(item.id, e.target.value)}
                                                             className="glass-input w-20 p-1.5 text-center text-sm rounded-lg text-emerald-500 placeholder-slate-500 focus:outline-none"
@@ -1382,8 +1877,8 @@
                                                     </div>
                                                 ) : (
                                                     <div className="flex items-center gap-2 justify-center">
-                                                        <input 
-                                                            type="number" 
+                                                        <input
+                                                            type="number"
                                                             placeholder="Rate"
                                                             onChange={(e) => handleRateChange(item.id, e.target.value)}
                                                             className="glass-input w-20 p-1.5 text-center text-sm rounded-lg text-theme-highlight placeholder-slate-500 focus:outline-none"
@@ -1394,7 +1889,7 @@
                                             </div>
                                         </div>
                                         <div className="col-span-3 text-right font-mono font-bold text-emerald-500 text-sm">
-                                            {formatWL(item.subtotal)} <img src={WL_ICON} className="inline w-3 h-3 ml-0.5 opacity-80" referrerPolicy="no-referrer"/>
+                                            {formatWL(item.subtotal)} <img src={WL_ICON} className="inline w-3 h-3 ml-0.5 opacity-80" referrerPolicy="no-referrer" />
                                         </div>
                                     </div>
                                 ))}
@@ -1409,10 +1904,19 @@
             const [showExclusive, setShowExclusive] = useState(true);
             const [showEvent, setShowEvent] = useState(false);
             const [selectedEvent, setSelectedEvent] = useState('valentine');
-            
+
             const [quantities, setQuantities] = useState({});
             const [prices, setPrices] = useState({});
             const [priceModes, setPriceModes] = useState({});
+
+            const presetHook = usePresets("bbm_presets", { quantities, prices, priceModes, showExclusive, showEvent, selectedEvent }, (data) => {
+                setQuantities(data.quantities || {});
+                setPrices(data.prices || {});
+                setPriceModes(data.priceModes || {});
+                if (data.showExclusive !== undefined) setShowExclusive(data.showExclusive);
+                if (data.showEvent !== undefined) setShowEvent(data.showEvent);
+                if (data.selectedEvent) setSelectedEvent(data.selectedEvent);
+            });
 
             const eventOptions = [
                 { id: 'valentine', label: "Valentine's Week" },
@@ -1459,11 +1963,11 @@
                 return { totalWL, totalItems };
             }, [visibleItems, quantities, prices, priceModes]);
 
-            const handleQtyChange = (name, val) => setQuantities(p => ({...p, [name]: parseInt(val) || 0}));
-            const handlePriceChange = (name, val) => setPrices(p => ({...p, [name]: parseFloat(val) || 0}));
+            const handleQtyChange = (name, val) => setQuantities(p => ({ ...p, [name]: parseInt(val) || 0 }));
+            const handlePriceChange = (name, val) => setPrices(p => ({ ...p, [name]: parseFloat(val) || 0 }));
             const toggleMode = (name) => {
                 setPriceModes(p => ({
-                    ...p, 
+                    ...p,
                     [name]: p[name] === 'wl_per_item' ? 'item_per_wl' : 'wl_per_item'
                 }));
             };
@@ -1474,7 +1978,8 @@
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
                     {/* LEFT: CONTROLS & SUMMARY */}
                     <div className="lg:col-span-4 space-y-4">
-                        <div className="glass-panel p-5 rounded-2xl" style={{background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.1), rgba(15, 23, 42, 0.1))'}}>
+                        <PresetManager hook={presetHook} />
+                        <div className="glass-panel p-5 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.1), rgba(15, 23, 42, 0.1))' }}>
                             <h3 className="text-lg font-bold text-theme-highlight mb-2 flex items-center gap-2">
                                 <img src={BBM_ICON} className="w-6 h-6 object-contain" referrerPolicy="no-referrer" /> BBM Shop
                             </h3>
@@ -1482,24 +1987,24 @@
                                 <div className="flex items-center justify-between p-2 rounded-lg bg-black/5 border border-white/5">
                                     <span className="text-xs text-purple-400 font-bold uppercase">Machine Exclusives</span>
                                     <div className="relative inline-block w-10 align-middle select-none">
-                                        <input type="checkbox" checked={showExclusive} onChange={() => setShowExclusive(!showExclusive)} className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-600 transition-all duration-300"/>
+                                        <input type="checkbox" checked={showExclusive} onChange={() => setShowExclusive(!showExclusive)} className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-600 transition-all duration-300" />
                                         <label className="toggle-label block overflow-hidden h-5 rounded-full bg-slate-700 cursor-pointer"></label>
                                     </div>
                                 </div>
-                                
+
                                 <div className="p-3 rounded-lg bg-black/5 border border-white/5 space-y-3">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs text-pink-400 font-bold uppercase">Event Drops</span>
                                         <div className="relative inline-block w-10 align-middle select-none">
-                                            <input type="checkbox" checked={showEvent} onChange={() => setShowEvent(!showEvent)} className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-600 transition-all duration-300"/>
+                                            <input type="checkbox" checked={showEvent} onChange={() => setShowEvent(!showEvent)} className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-600 transition-all duration-300" />
                                             <label className="toggle-label block overflow-hidden h-5 rounded-full bg-slate-700 cursor-pointer"></label>
                                         </div>
                                     </div>
-                                    
+
                                     {showEvent && (
                                         <div className="animate-fade-in">
-                                            <select 
-                                                value={selectedEvent} 
+                                            <select
+                                                value={selectedEvent}
                                                 onChange={(e) => setSelectedEvent(e.target.value)}
                                                 className="glass-input w-full p-2 text-xs rounded-lg focus:outline-none cursor-pointer"
                                             >
@@ -1518,17 +2023,17 @@
                                     <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600 font-mono">
                                         {formatWL(stats.totalWL)}
                                     </h2>
-                                    <img src={WL_ICON} className="w-8 h-8 mb-1" referrerPolicy="no-referrer"/>
+                                    <img src={WL_ICON} className="w-8 h-8 mb-1" referrerPolicy="no-referrer" />
                                 </div>
                                 <div className="text-xs text-theme-muted mt-2">
                                     Total Item Terjual: <span className="text-theme-highlight font-bold">{stats.totalItems}</span>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="glass-panel p-4 rounded-xl text-center">
                             <p className="text-xs text-theme-muted">
-                                Gunakan tombol <Icons.Refresh size={12} className="inline"/> di sebelah harga untuk mengubah mode harga (Item/WL atau WL/Item).
+                                Gunakan tombol <Icons.Refresh size={12} className="inline" /> di sebelah harga untuk mengubah mode harga (Item/WL atau WL/Item).
                             </p>
                         </div>
                     </div>
@@ -1544,8 +2049,8 @@
                                 {visibleItems.map((item, idx) => {
                                     const qty = quantities[item.name] || '';
                                     const price = prices[item.name] || '';
-                                    const mode = priceModes[item.name] || 'item_per_wl'; 
-                                    
+                                    const mode = priceModes[item.name] || 'item_per_wl';
+
                                     let rowTotal = 0;
                                     if (qty && price) {
                                         rowTotal = mode === 'item_per_wl' ? qty / price : qty * price;
@@ -1554,18 +2059,17 @@
                                     return (
                                         <div key={idx} className="grid grid-cols-12 items-center p-2 rounded-xl bg-black/5 hover:bg-white/5 transition-colors border border-white/5 gap-2">
                                             <div className="col-span-5 md:col-span-4 flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center border shrink-0 ${
-                                                    item.cat === 'exclusive' ? 'bg-purple-500/10 border-purple-500/30' : 
-                                                    item.cat === 'event' ? 'bg-pink-500/10 border-pink-500/30' : 
-                                                    'bg-black/10 border-white/10'
-                                                }`}>
-                                                    <img 
-                                                        src={item.img} 
-                                                        className="w-6 h-6 object-contain" 
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center border shrink-0 ${item.cat === 'exclusive' ? 'bg-purple-500/10 border-purple-500/30' :
+                                                    item.cat === 'event' ? 'bg-pink-500/10 border-pink-500/30' :
+                                                        'bg-black/10 border-white/10'
+                                                    }`}>
+                                                    <img
+                                                        src={item.img}
+                                                        className="w-6 h-6 object-contain"
                                                         referrerPolicy="no-referrer"
                                                         onError={(e) => {
-                                                            e.target.onerror = null; 
-                                                            e.target.src = BBM_ICON; 
+                                                            e.target.onerror = null;
+                                                            e.target.src = BBM_ICON;
                                                         }}
                                                     />
                                                 </div>
@@ -1577,8 +2081,8 @@
                                             </div>
 
                                             <div className="col-span-3 md:col-span-3">
-                                                <input 
-                                                    type="number" 
+                                                <input
+                                                    type="number"
                                                     placeholder="0"
                                                     value={qty}
                                                     onChange={(e) => handleQtyChange(item.name, e.target.value)}
@@ -1590,7 +2094,7 @@
                                                 <div className="flex-1 relative flex items-center">
                                                     {mode === 'item_per_wl' ? (
                                                         <>
-                                                            <input 
+                                                            <input
                                                                 type="number" placeholder="Rate"
                                                                 value={price}
                                                                 onChange={(e) => handlePriceChange(item.name, e.target.value)}
@@ -1601,7 +2105,7 @@
                                                     ) : (
                                                         <>
                                                             <span className="absolute left-2 text-[9px] text-theme-muted">1/</span>
-                                                            <input 
+                                                            <input
                                                                 type="number" placeholder="WL"
                                                                 value={price}
                                                                 onChange={(e) => handlePriceChange(item.name, e.target.value)}
@@ -1610,13 +2114,13 @@
                                                         </>
                                                     )}
                                                 </div>
-                                                
-                                                <button 
+
+                                                <button
                                                     onClick={() => toggleMode(item.name)}
                                                     className="p-1.5 rounded-lg bg-white/5 hover:bg-white/20 text-theme-muted hover:text-theme-main transition-colors"
                                                     title="Switch Price Mode"
                                                 >
-                                                    <Icons.Refresh size={12}/>
+                                                    <Icons.Refresh size={12} />
                                                 </button>
 
                                                 <div className="w-12 text-right text-[10px] font-mono text-theme-main hidden md:block">
@@ -1646,12 +2150,12 @@
                 <div className="max-w-4xl mx-auto pt-10 animate-fade-in">
                     <h1 className="text-4xl md:text-5xl font-black text-center text-theme-highlight mb-2">Welcome to Jek Cal's</h1>
                     <p className="text-center text-theme-muted mb-12">Pilih alat bantu Growtopia yang kamu butuhkan.</p>
-                    
+
                     <ServerStatus />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-4">
                         {menus.map(menu => (
-                            <button 
+                            <button
                                 key={menu.id}
                                 disabled={menu.disabled}
                                 onClick={() => !menu.disabled && setPage(menu.id)}
@@ -1665,7 +2169,7 @@
                                             {menu.imgSrc ? (
                                                 <img src={menu.imgSrc} alt={menu.title} className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
                                             ) : (
-                                                <menu.icon size={24}/>
+                                                <menu.icon size={24} />
                                             )}
                                         </div>
                                         <h3 className="text-xl font-bold text-theme-highlight mb-1">{menu.title}</h3>
@@ -1673,7 +2177,7 @@
                                     </div>
                                     {!menu.disabled && (
                                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors text-theme-main">
-                                            <Icons.ArrowLeft size={16} className="rotate-180"/>
+                                            <Icons.ArrowLeft size={16} className="rotate-180" />
                                         </div>
                                     )}
                                 </div>
@@ -1704,8 +2208,8 @@
                         {page === 'dashboard' && <Dashboard setPage={setPage} />}
                         {page === 'role' && <RoleCalculator />}
                         {page === 'xp' && <XpLevelCalculator />}
-                        {page === 'surgery' && <ShopCalculator title="Surgery Shop" icon={Icons.ShoppingBag} items={SURGERY_ITEMS} defaultPrice={7000} />}
-                        {page === 'startopia' && <ShopCalculator title="Startopia Shop" icon={Icons.Rocket} items={STARTOPIA_ITEMS} defaultPrice={5000} />}
+                        {page === 'surgery' && <ShopCalculator title="Surgery Shop" icon={Icons.ShoppingBag} items={SURGERY_ITEMS} defaultPrice={7000} presetId="surgery_presets" />}
+                        {page === 'startopia' && <ShopCalculator title="Startopia Shop" icon={Icons.Rocket} items={STARTOPIA_ITEMS} defaultPrice={5000} presetId="startopia_presets" />}
                         {page === 'bbm' && <BBMShopCalculator />}
                     </div>
                 </div>
@@ -1716,4 +2220,5 @@
         root.render(<App />);
     </script>
 </body>
+
 </html>
