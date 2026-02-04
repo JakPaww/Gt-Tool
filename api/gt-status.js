@@ -3,8 +3,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  
+  res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=59'); // Cache at edge for 10s
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -13,170 +13,114 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // --- SMART HEADERS ---
+  const USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+  ];
+
+  const getRandomHeaders = () => ({
+    'User-Agent': USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)],
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
+    'Referer': 'https://growtopiagame.com/', // Spoof referer
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'same-origin',
+    'Upgrade-Insecure-Requests': '1'
+  });
+
   // Multiple proxy methods
   const fetchMethods = [
-    // Method 1: AllOrigins (paling reliable untuk Growtopia)
+    // Method 1: AllOrigins (Raw) - Seringkali paling reliable
     {
       name: 'AllOrigins',
       fetch: async () => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         try {
-          const response = await fetch(
-            'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://growtopiagame.com/detail'),
-            { 
-              signal: controller.signal,
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-              }
-            }
-          );
+          // Add timestamp to bypass cache
+          const url = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://growtopiagame.com/detail') + '&t=' + Date.now();
+          const response = await fetch(url, {
+            signal: controller.signal,
+            headers: getRandomHeaders()
+          });
           clearTimeout(timeoutId);
-          
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const text = await response.text();
-          return JSON.parse(text);
-        } catch (error) {
+          return await response.json();
+        } catch (e) {
           clearTimeout(timeoutId);
-          throw error;
+          throw e;
         }
       }
     },
-    
-    // Method 2: CORS Anywhere alternative
-    {
-      name: 'ThingProxy',
-      fetch: async () => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        try {
-          const response = await fetch(
-            'https://thingproxy.freeboard.io/fetch/' + encodeURIComponent('https://growtopiagame.com/detail'),
-            { signal: controller.signal }
-          );
-          clearTimeout(timeoutId);
-          
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const text = await response.text();
-          return JSON.parse(text);
-        } catch (error) {
-          clearTimeout(timeoutId);
-          throw error;
-        }
-      }
-    },
-    
-    // Method 3: AllOrigins dengan get endpoint
+
+    // Method 2: AllOrigins (Get) - Format JSON
     {
       name: 'AllOriginsGet',
       fetch: async () => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         try {
-          const response = await fetch(
-            'https://api.allorigins.win/get?url=' + encodeURIComponent('https://growtopiagame.com/detail'),
-            { signal: controller.signal }
-          );
+          const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://growtopiagame.com/detail') + '&t=' + Date.now();
+          const response = await fetch(url, { signal: controller.signal });
           clearTimeout(timeoutId);
-          
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const result = await response.json();
-          
-          if (result.contents) {
-            return JSON.parse(result.contents);
-          }
+          const json = await response.json();
+          if (json.contents) return JSON.parse(json.contents);
           throw new Error('No contents');
-        } catch (error) {
+        } catch (e) {
           clearTimeout(timeoutId);
-          throw error;
+          throw e;
         }
       }
     },
-    
-    // Method 4: CORS.io
+
+    // Method 3: Direct (Dengan Headers Lengkap)
+    // Kadang Vercel IP tidak di-block jika headers mirip browser
     {
-      name: 'CORSAnywhere',
+      name: 'DirectSmart',
       fetch: async () => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        try {
-          const response = await fetch(
-            'https://cors-anywhere.herokuapp.com/https://growtopiagame.com/detail',
-            { 
-              signal: controller.signal,
-              headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-              }
-            }
-          );
-          clearTimeout(timeoutId);
-          
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const text = await response.text();
-          return JSON.parse(text);
-        } catch (error) {
-          clearTimeout(timeoutId);
-          throw error;
-        }
-      }
-    },
-    
-    // Method 5: JSONProxy
-    {
-      name: 'JSONProxy',
-      fetch: async () => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        try {
-          const response = await fetch(
-            'https://jsonp.afeld.me/?url=' + encodeURIComponent('https://growtopiagame.com/detail'),
-            { signal: controller.signal }
-          );
-          clearTimeout(timeoutId);
-          
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const text = await response.text();
-          return JSON.parse(text);
-        } catch (error) {
-          clearTimeout(timeoutId);
-          throw error;
-        }
-      }
-    },
-    
-    // Method 6: Direct (last resort)
-    {
-      name: 'Direct',
-      fetch: async () => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
         try {
           const response = await fetch('https://growtopiagame.com/detail', {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              'Accept': 'application/json, text/plain, */*',
-              'Accept-Language': 'en-US,en;q=0.9',
-              'Referer': 'https://growtopiagame.com/',
-              'Origin': 'https://growtopiagame.com',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache'
-            },
+            headers: getRandomHeaders(),
             signal: controller.signal
           });
           clearTimeout(timeoutId);
-          
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const text = await response.text();
-          return JSON.parse(text);
+          return await response.json();
         } catch (error) {
           clearTimeout(timeoutId);
           throw error;
+        }
+      }
+    },
+
+    // Method 4: CorsProxy.io (Alternative)
+    {
+      name: 'CorsProxyIO',
+      fetch: async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        try {
+          const url = 'https://corsproxy.io/?' + encodeURIComponent('https://growtopiagame.com/detail');
+          const response = await fetch(url, {
+            headers: getRandomHeaders(),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.json();
+        } catch (e) {
+          clearTimeout(timeoutId);
+          throw e;
         }
       }
     }
@@ -184,19 +128,18 @@ export default async function handler(req, res) {
 
   const errors = [];
   const startTime = Date.now();
-  
+
   // Try each method
   for (const method of fetchMethods) {
     try {
       console.log(`[${new Date().toISOString()}] Trying ${method.name}...`);
-      
       const data = await method.fetch();
-      
-      // Validate
+
+      // Validate Data
       if (data && data.online_user !== undefined) {
         const elapsed = Date.now() - startTime;
-        console.log(`[${new Date().toISOString()}] ✅ ${method.name} SUCCESS in ${elapsed}ms`);
-        
+        console.log(`[SUCC] ${method.name} in ${elapsed}ms`);
+
         return res.status(200).json({
           success: true,
           timestamp: new Date().toISOString(),
@@ -205,27 +148,24 @@ export default async function handler(req, res) {
           elapsed_ms: elapsed
         });
       } else {
-        throw new Error('Missing online_user field');
+        throw new Error('Invalid data structure');
       }
-      
+
     } catch (error) {
       const errorMsg = `${method.name}: ${error.message}`;
-      console.error(`[${new Date().toISOString()}] ❌ ${errorMsg}`);
+      console.error(`[FAIL] ${errorMsg}`);
       errors.push(errorMsg);
+      // If error is 403/429, wait a bit before next method? 
+      // Nah, just simple failover for now.
     }
   }
-  
+
   // All failed
   const elapsed = Date.now() - startTime;
-  console.error(`[${new Date().toISOString()}] 🚫 All ${fetchMethods.length} methods failed in ${elapsed}ms`);
-  
-  return res.status(503).json({ 
+  return res.status(503).json({
     success: false,
     error: 'All fetch methods failed',
     attempts: errors,
-    total_methods: fetchMethods.length,
-    elapsed_ms: elapsed,
-    timestamp: new Date().toISOString(),
-    hint: 'Try again in a few seconds. Growtopia API may be rate limiting.'
+    elapsed_ms: elapsed
   });
 }
