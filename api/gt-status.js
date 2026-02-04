@@ -37,7 +37,54 @@ export default async function handler(req, res) {
 
   // Multiple proxy methods
   const fetchMethods = [
-    // Method 1: AllOrigins (Raw) - Paling reliable tapi kadang lambat
+    // Method 0: Direct (Paling Cepat & Stabil) - MOVED TO TOP
+    {
+      name: 'DirectSmart',
+      fetch: async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
+        // Exact headers from proven debug script
+        const DIRECT_HEADERS = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Sec-Fetch-User': '?1',
+          'Cache-Control': 'max-age=0'
+        };
+
+        try {
+          // Note: Vercel serverless might still be blocked by certain IPs, but this gives best chance
+          const response = await fetch('https://growtopiagame.com/detail', {
+            headers: DIRECT_HEADERS,
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          // Parsing handling (handling content-type text/html if API returns it implicitly)
+          const text = await response.text();
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            // If not JSON, maybe HTML?
+            console.log("Response text preview:", text.substring(0, 100));
+            throw new Error("Invalid JSON response");
+          }
+        } catch (error) {
+          clearTimeout(timeoutId);
+          throw error;
+        }
+      }
+    },
+
+    // Method 1: AllOrigins (Raw)
     {
       name: 'AllOrigins',
       fetch: async () => {
@@ -59,7 +106,7 @@ export default async function handler(req, res) {
       }
     },
 
-    // Method 2: ThingProxy (Restore this!)
+    // Method 2: ThingProxy
     {
       name: 'ThingProxy',
       fetch: async () => {
@@ -82,7 +129,7 @@ export default async function handler(req, res) {
       }
     },
 
-    // Method 3: JSONProxy (Restore this!)
+    // Method 3: JSONProxy
     {
       name: 'JSONProxy',
       fetch: async () => {
@@ -140,27 +187,6 @@ export default async function handler(req, res) {
         } catch (e) {
           clearTimeout(timeoutId);
           throw e;
-        }
-      }
-    },
-
-    // Method 6: Direct (Last Resort)
-    {
-      name: 'DirectSmart',
-      fetch: async () => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        try {
-          const response = await fetch('https://growtopiagame.com/detail', {
-            headers: getRandomHeaders(),
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          return await response.json();
-        } catch (error) {
-          clearTimeout(timeoutId);
-          throw error;
         }
       }
     }
